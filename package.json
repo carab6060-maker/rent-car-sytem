@@ -1,0 +1,17 @@
+{
+  "name": "car-rental-system",
+  "version": "1.0.0",
+  "description": "Car Rental Management System",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.2.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "pg": "^8.13.3",
+    "ws": "^8.22.0"
+  }
+}
