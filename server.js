@@ -20,6 +20,29 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+let isInitialized = false;
+
+// Middleware to ensure DB is initialized on API requests
+app.use(async (req, res, next) => {
+  if (req.path.startsWith('/api')) {
+    if (!process.env.DATABASE_URL) {
+      return res.status(500).json({
+        error: 'DATABASE_URL environment variable is missing. Please add DATABASE_URL in your Vercel Project Settings > Environment Variables.'
+      });
+    }
+    if (!isInitialized) {
+      try {
+        await initTables();
+        isInitialized = true;
+      } catch (err) {
+        console.error('Failed to initialize database tables:', err);
+        return res.status(500).json({ error: 'Database connection failed: ' + err.message });
+      }
+    }
+  }
+  next();
+});
+
 // =====================================================
 // DASHBOARD
 // =====================================================
@@ -383,21 +406,36 @@ app.get('/api/cars/available', async (req, res) => {
   }
 });
 
+// Fallback route to serve frontend index.html
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // =====================================================
-// START SERVER
+// START SERVER (Local Development)
 // =====================================================
 async function start() {
   try {
-    await testConnection();
-    await initTables();
+    if (process.env.DATABASE_URL) {
+      await testConnection();
+      await initTables();
+      isInitialized = true;
+    } else {
+      console.warn('⚠️ WARNING: DATABASE_URL is not set.');
+    }
 
     app.listen(PORT, () => {
       console.log(`\n✓ Server running at http://localhost:${PORT}\n`);
     });
   } catch (err) {
     console.error('✗ Failed to start server:', err.message);
-    process.exit(1);
   }
 }
 
-start();
+// Export for Vercel serverless deployment
+module.exports = app;
+
+// Only start listening if run directly (node server.js)
+if (require.main === module) {
+  start();
+}

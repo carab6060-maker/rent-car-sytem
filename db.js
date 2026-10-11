@@ -29,24 +29,46 @@ dns.lookup = function(hostname, options, callback) {
   return origLookup.call(dns, hostname, options, callback);
 };
 
-// Clean connection string (remove channel_binding parameter for pg compatibility)
-let connectionString = process.env.DATABASE_URL || '';
-try {
-  const url = new URL(connectionString);
-  url.searchParams.delete('channel_binding');
-  connectionString = url.toString();
-} catch (e) {
-  // Use as-is if parsing fails
+let _pool = null;
+
+function getPool() {
+  if (_pool) return _pool;
+
+  const rawUrl = process.env.DATABASE_URL || '';
+  if (!rawUrl) {
+    throw new Error('DATABASE_URL environment variable is missing. Please configure it in your environment or Vercel settings.');
+  }
+
+  let connectionString = rawUrl;
+  try {
+    const url = new URL(rawUrl);
+    url.searchParams.delete('channel_binding');
+    connectionString = url.toString();
+  } catch (e) {
+    // Keep rawUrl if URL parsing fails
+  }
+
+  _pool = new Pool({
+    connectionString,
+    ssl: { rejectUnauthorized: false },
+  });
+
+  return _pool;
 }
 
-const pool = new Pool({
-  connectionString,
-  ssl: { rejectUnauthorized: false },
+// Proxy pool so methods like pool.query() work dynamically
+const pool = new Proxy({}, {
+  get(target, prop) {
+    const p = getPool();
+    const val = p[prop];
+    return typeof val === 'function' ? val.bind(p) : val;
+  }
 });
 
 // Test connection
 async function testConnection() {
-  const client = await pool.connect();
+  const p = getPool();
+  const client = await p.connect();
   try {
     const res = await client.query('SELECT NOW()');
     console.log('✓ Database connected at:', res.rows[0].now);
@@ -57,7 +79,8 @@ async function testConnection() {
 
 // Create tables if they don't exist
 async function initTables() {
-  const client = await pool.connect();
+  const p = getPool();
+  const client = await p.connect();
   try {
     await client.query(`
       CREATE TABLE IF NOT EXISTS cars (
