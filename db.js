@@ -13,21 +13,23 @@ const { Pool, types } = require('pg');
 // Return PostgreSQL DATE as 'YYYY-MM-DD' string without timezone shifting
 types.setTypeParser(1082, (val) => val);
 
-// Disable autoSelectFamily and ensure IPv4 is used to prevent IPv6 timeout issues on Windows
-if (net.setDefaultAutoSelectFamily) {
-  net.setDefaultAutoSelectFamily(false);
-}
-const origLookup = dns.lookup;
-dns.lookup = function(hostname, options, callback) {
-  if (typeof options === 'function') {
-    callback = options;
-    options = {};
-  } else if (typeof options === 'number') {
-    options = { family: options };
+// Disable autoSelectFamily and ensure IPv4 is used on Windows only
+if (process.platform === 'win32') {
+  if (net.setDefaultAutoSelectFamily) {
+    net.setDefaultAutoSelectFamily(false);
   }
-  options = Object.assign({}, options, { family: 4 });
-  return origLookup.call(dns, hostname, options, callback);
-};
+  const origLookup = dns.lookup;
+  dns.lookup = function(hostname, options, callback) {
+    if (typeof options === 'function') {
+      callback = options;
+      options = {};
+    } else if (typeof options === 'number') {
+      options = { family: options };
+    }
+    options = Object.assign({}, options, { family: 4 });
+    return origLookup.call(dns, hostname, options, callback);
+  };
+}
 
 let _pool = null;
 
@@ -51,6 +53,8 @@ function getPool() {
   _pool = new Pool({
     connectionString,
     ssl: { rejectUnauthorized: false },
+    connectionTimeoutMillis: 5000,
+    idleTimeoutMillis: 30000,
   });
 
   _pool.on('error', (err) => {

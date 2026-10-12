@@ -28,14 +28,38 @@ app.set('trust proxy', 1);
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Fast Health Check Endpoint (does not require DB or Session)
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    databaseConfigured: !!process.env.DATABASE_URL,
+    sessionSecretConfigured: !!process.env.SESSION_SECRET,
+    environment: process.env.NODE_ENV || 'development',
+    time: new Date().toISOString(),
+  });
+});
+
+// Guard: if DATABASE_URL is missing, return friendly 500 error immediately
+// instead of letting session store or DB pool hang/crash
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api') && req.path !== '/api/health') {
+    if (!process.env.DATABASE_URL) {
+      return res.status(500).json({
+        error: 'DATABASE_URL environment variable is missing. Please add DATABASE_URL in Vercel Project Settings > Environment Variables.'
+      });
+    }
+  }
+  next();
+});
+
 // Session configuration — uses PostgreSQL as session store
-app.use(session({
+const sessionMiddleware = session({
   store: new pgSession({
     pool: pool,
     tableName: 'session',
     createTableIfMissing: false,
   }),
-  secret: process.env.SESSION_SECRET || 'change-this-secret-in-production',
+  secret: process.env.SESSION_SECRET || 'car-rental-default-session-secret-production',
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -44,19 +68,22 @@ app.use(session({
     maxAge: 8 * 60 * 60 * 1000, // 8 hours
     sameSite: 'lax',
   },
-}));
+});
+
+// Only attach session if DATABASE_URL is present
+app.use((req, res, next) => {
+  if (!process.env.DATABASE_URL) {
+    return next();
+  }
+  sessionMiddleware(req, res, next);
+});
 
 let isInitialized = false;
 
 // Middleware to ensure DB is initialized on API requests
 app.use(async (req, res, next) => {
-  if (req.path.startsWith('/api')) {
-    if (!process.env.DATABASE_URL) {
-      return res.status(500).json({
-        error: 'DATABASE_URL environment variable is missing. Please add DATABASE_URL in your Vercel Project Settings > Environment Variables.'
-      });
-    }
-    if (!isInitialized) {
+  if (req.path.startsWith('/api') && req.path !== '/api/health') {
+    if (!isInitialized && process.env.DATABASE_URL) {
       try {
         await initTables();
         isInitialized = true;
