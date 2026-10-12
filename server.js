@@ -327,11 +327,41 @@ app.get('/api/dashboard', requireAuth, async (req, res) => {
     const rented = await pool.query("SELECT COUNT(*) FROM cars WHERE status = 'Rented'");
     const totalCustomers = await pool.query('SELECT COUNT(*) FROM customers');
 
+    const fleetStatus = await pool.query('SELECT status, COUNT(*)::int as count FROM cars GROUP BY status ORDER BY count DESC');
+
+    const recentRentals = await pool.query(`
+      SELECT r.id, r.start_date, r.return_date, r.total_price, r.status,
+             c.name as car_name, c.model as car_model,
+             cust.full_name as customer_name
+      FROM rentals r
+      LEFT JOIN cars c ON r.car_id = c.id
+      LEFT JOIN customers cust ON r.customer_id = cust.id
+      ORDER BY r.id DESC
+      LIMIT 5
+    `);
+
+    const rentalsByMonth = await pool.query(`
+      SELECT TO_CHAR(start_date, 'Mon YYYY') as month_label,
+             DATE_TRUNC('month', start_date) as sort_month,
+             COUNT(*)::int as rental_count,
+             COALESCE(SUM(total_price), 0)::numeric as total_amount
+      FROM rentals
+      GROUP BY month_label, sort_month
+      ORDER BY sort_month ASC
+      LIMIT 6
+    `);
+
+    const revenueSummary = await pool.query(`SELECT COALESCE(SUM(amount), 0)::numeric as total_revenue FROM payments WHERE status = 'Paid'`);
+
     res.json({
       totalCars: parseInt(totalCars.rows[0].count),
       availableCars: parseInt(available.rows[0].count),
       rentedCars: parseInt(rented.rows[0].count),
       totalCustomers: parseInt(totalCustomers.rows[0].count),
+      totalRevenue: parseFloat(revenueSummary.rows[0].total_revenue || 0),
+      fleetStatus: fleetStatus.rows,
+      recentRentals: recentRentals.rows,
+      rentalsByMonth: rentalsByMonth.rows,
     });
   } catch (err) {
     console.error('Dashboard error:', err);

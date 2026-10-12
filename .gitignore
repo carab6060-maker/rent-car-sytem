@@ -12,3 +12,4 @@ Thumbs.db
 scripts/
 tests/test-finances.js
 tests/test-removal-verification.js
+scratch/

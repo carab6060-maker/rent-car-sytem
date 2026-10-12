@@ -281,38 +281,403 @@ function isManager() {
 }
 
 // =====================================================
-// 1. DASHBOARD
+// 1. DASHBOARD & ANALYTICS CHARTS
 // =====================================================
+let fleetChartInstance = null;
+let rentalsTrendChartInstance = null;
+
+function formatDashDate(str) {
+  if (!str) return '-';
+  return String(str).split('T')[0];
+}
+
 async function renderDashboard() {
-  pageContainer.innerHTML = '<p style="color:#999">Loading...</p>';
+  pageContainer.innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;color:#64748b;padding:40px 0;">
+      <div class="spinner"></div>
+      <p>Loading fleet metrics & live charts...</p>
+    </div>
+  `;
+
   try {
     const data = await API.get('/api/dashboard');
 
+    const totalCars = data.totalCars || 0;
+    const availableCars = data.availableCars || 0;
+    const rentedCars = data.rentedCars || 0;
+    const totalCustomers = data.totalCustomers || 0;
+    const totalRevenue = typeof data.totalRevenue === 'number' ? data.totalRevenue : parseFloat(data.totalRevenue || 0);
+    const utilizationRate = totalCars > 0 ? Math.round((rentedCars / totalCars) * 100) : 0;
+    const recentRentals = Array.isArray(data.recentRentals) ? data.recentRentals : [];
+
     pageContainer.innerHTML = `
-      <div class="dashboard-section-header" style="margin-bottom:16px">
-        <h3 style="font-size:1.15rem;font-weight:700;color:var(--color-text)">Fleet & Customer Overview</h3>
+      <div class="dashboard-section-header" style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <h3 style="font-size:1.2rem;font-weight:700;color:var(--color-navy)">Fleet & Operations Overview</h3>
+          <p style="font-size:0.83rem;color:var(--color-text-secondary);margin-top:2px;">Live database summary of vehicles, bookings, and customer activity</p>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="renderDashboard()" style="display:flex;align-items:center;gap:6px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          Refresh
+        </button>
       </div>
+
+      <!-- Top Stat Cards -->
       <div class="stat-grid">
         <div class="stat-card">
-          <span class="stat-label">Total Cars</span>
-          <span class="stat-value">${data.totalCars}</span>
+          <span class="stat-label">Total Vehicles</span>
+          <span class="stat-value">${totalCars}</span>
         </div>
         <div class="stat-card success">
           <span class="stat-label">Available Cars</span>
-          <span class="stat-value">${data.availableCars}</span>
+          <span class="stat-value">${availableCars}</span>
         </div>
         <div class="stat-card warning">
           <span class="stat-label">Rented Cars</span>
-          <span class="stat-value">${data.rentedCars}</span>
+          <span class="stat-value">${rentedCars}</span>
         </div>
         <div class="stat-card info">
           <span class="stat-label">Total Customers</span>
-          <span class="stat-value">${data.totalCustomers}</span>
+          <span class="stat-value">${totalCustomers}</span>
+        </div>
+      </div>
+
+      <!-- Live Analytics Charts -->
+      <div class="dashboard-charts-grid">
+        <!-- Fleet Status Donut Chart -->
+        <div class="dashboard-card">
+          <div class="dashboard-card-header">
+            <div>
+              <h4 class="dashboard-card-title">Fleet Availability</h4>
+              <p class="dashboard-card-subtitle">Real-time vehicle status distribution</p>
+            </div>
+            <span class="badge badge-available">${availableCars} Available</span>
+          </div>
+          <div class="chart-canvas-container">
+            <canvas id="fleetStatusChart"></canvas>
+          </div>
+          <div class="chart-legend-row" id="fleetLegendRow"></div>
+        </div>
+
+        <!-- Rental Booking Trends Chart -->
+        <div class="dashboard-card">
+          <div class="dashboard-card-header">
+            <div>
+              <h4 class="dashboard-card-title">Rental Booking Activity</h4>
+              <p class="dashboard-card-subtitle">Monthly rental volume and collected revenue</p>
+            </div>
+            <span class="badge badge-returned">${recentRentals.length} Recent Contracts</span>
+          </div>
+          <div class="chart-canvas-container">
+            <canvas id="rentalsTrendChart"></canvas>
+          </div>
+          <div class="chart-legend-row">
+            <div class="chart-legend-item">
+              <span class="chart-legend-dot" style="background:#358dd5"></span>
+              <span>Rentals Count</span>
+            </div>
+            <div class="chart-legend-item">
+              <span class="chart-legend-dot" style="background:#20225d"></span>
+              <span>Revenue ($)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Operations & Recent Rentals Grid -->
+      <div class="dashboard-bottom-grid">
+        <!-- Recent Rentals Table -->
+        <div class="dashboard-card">
+          <div class="dashboard-card-header">
+            <div>
+              <h4 class="dashboard-card-title">Recent Rental Agreements</h4>
+              <p class="dashboard-card-subtitle">Latest active & completed contracts</p>
+            </div>
+            <a href="#" class="dashboard-view-all-link" onclick="navigateTo('rentals');return false;">View All &rarr;</a>
+          </div>
+          <div class="dashboard-table-wrapper">
+            ${recentRentals.length === 0 ? `
+              <p style="color:var(--color-text-secondary);padding:20px 0;font-size:0.88rem;text-align:center;">No rental records found yet.</p>
+            ` : `
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Customer</th>
+                    <th>Car</th>
+                    <th>Rental Period</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${recentRentals.map(r => {
+                    const statusClass = (r.status || '').toLowerCase() === 'rented' ? 'badge-rented' : 'badge-returned';
+                    const customerInitial = (r.customer_name || 'C').charAt(0).toUpperCase();
+                    return `
+                      <tr>
+                        <td>
+                          <div class="dashboard-cust-cell">
+                            <span class="dashboard-cust-avatar">${esc(customerInitial)}</span>
+                            <div>
+                              <div style="font-weight:600;color:var(--color-navy)">${esc(r.customer_name || 'Unknown')}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span style="font-weight:500;">${esc(r.car_name || 'Car')}</span>
+                          ${r.car_model ? `<span style="font-size:0.75rem;color:var(--color-text-secondary);display:block;">${esc(r.car_model)}</span>` : ''}
+                        </td>
+                        <td style="font-size:0.82rem;color:var(--color-text-secondary);">
+                          ${formatDashDate(r.start_date)} &rarr; ${formatDashDate(r.return_date)}
+                        </td>
+                        <td style="font-weight:700;color:var(--color-navy);">
+                          $${parseFloat(r.total_price || 0).toFixed(2)}
+                        </td>
+                        <td>
+                          <span class="badge ${statusClass}">${esc(r.status || 'Active')}</span>
+                        </td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            `}
+          </div>
+        </div>
+
+        <!-- Operations Summary KPI Card -->
+        <div class="dashboard-card">
+          <div class="dashboard-card-header">
+            <div>
+              <h4 class="dashboard-card-title">Fleet KPI Highlights</h4>
+              <p class="dashboard-card-subtitle">Key performance indicators</p>
+            </div>
+          </div>
+          <div class="dashboard-kpi-list">
+            <div class="dashboard-kpi-item">
+              <div class="dashboard-kpi-top">
+                <span class="dashboard-kpi-title">Fleet Utilization</span>
+                <span class="dashboard-kpi-val">${utilizationRate}%</span>
+              </div>
+              <div class="dashboard-progress-track">
+                <div class="dashboard-progress-fill" style="width: ${utilizationRate}%;"></div>
+              </div>
+              <span style="font-size:0.75rem;color:var(--color-text-secondary);margin-top:2px;">${rentedCars} of ${totalCars} cars currently rented</span>
+            </div>
+
+            <div class="dashboard-kpi-item">
+              <div class="dashboard-kpi-top">
+                <span class="dashboard-kpi-title">Total Revenue Collected</span>
+                <span class="dashboard-kpi-val" style="color:var(--color-success);">$${totalRevenue.toFixed(2)}</span>
+              </div>
+              <span style="font-size:0.75rem;color:var(--color-text-secondary);">Paid payments verified in Neon database</span>
+            </div>
+
+            <div class="dashboard-kpi-item">
+              <div class="dashboard-kpi-top">
+                <span class="dashboard-kpi-title">Active Fleet Status</span>
+                <span class="dashboard-kpi-val" style="font-size:0.95rem;color:var(--color-primary);">${availableCars} Ready to Rent</span>
+              </div>
+              <span style="font-size:0.75rem;color:var(--color-text-secondary);">${rentedCars} currently out with customers</span>
+            </div>
+          </div>
         </div>
       </div>
     `;
+
+    // Render Chart.js charts
+    initDashboardCharts(data);
+
   } catch (err) {
-    pageContainer.innerHTML = `<p style="color:red">Error: ${esc(err.message)}</p>`;
+    pageContainer.innerHTML = `
+      <div class="empty-state">
+        <p style="color:var(--color-danger)">Failed to load dashboard: ${esc(err.message)}</p>
+        <button class="btn btn-secondary" onclick="renderDashboard()" style="margin-top:12px">Try Again</button>
+      </div>
+    `;
+  }
+}
+
+function initDashboardCharts(data) {
+  if (typeof Chart === 'undefined') {
+    console.warn('Chart.js not loaded yet');
+    return;
+  }
+
+  // Destroy previous instances if any
+  if (fleetChartInstance) {
+    fleetChartInstance.destroy();
+    fleetChartInstance = null;
+  }
+  if (rentalsTrendChartInstance) {
+    rentalsTrendChartInstance.destroy();
+    rentalsTrendChartInstance = null;
+  }
+
+  const available = data.availableCars || 0;
+  const rented = data.rentedCars || 0;
+  const total = data.totalCars || (available + rented);
+  const maint = Math.max(0, total - (available + rented));
+
+  // 1. Fleet Availability Donut Chart
+  const fleetCtx = document.getElementById('fleetStatusChart');
+  if (fleetCtx) {
+    const labels = ['Available', 'Rented'];
+    const chartData = [available, rented];
+    const colors = ['#059669', '#d97706'];
+
+    if (maint > 0) {
+      labels.push('Maintenance');
+      chartData.push(maint);
+      colors.push('#64748b');
+    }
+
+    fleetChartInstance = new Chart(fleetCtx, {
+      type: 'doughnut',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: chartData,
+          backgroundColor: colors,
+          borderColor: '#ffffff',
+          borderWidth: 3,
+          hoverOffset: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '72%',
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            backgroundColor: '#20225d',
+            titleFont: { family: 'Inter', size: 13, weight: '600' },
+            bodyFont: { family: 'Inter', size: 12 },
+            padding: 10,
+            cornerRadius: 8,
+            callbacks: {
+              label: function(ctx) {
+                const val = ctx.raw || 0;
+                const pct = total > 0 ? Math.round((val / total) * 100) : 0;
+                return ` ${ctx.label}: ${val} (${pct}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const legendRow = document.getElementById('fleetLegendRow');
+    if (legendRow) {
+      const availPct = total > 0 ? Math.round((available / total) * 100) : 0;
+      const rentPct = total > 0 ? Math.round((rented / total) * 100) : 0;
+      legendRow.innerHTML = `
+        <div class="chart-legend-item">
+          <span class="chart-legend-dot" style="background:#059669"></span>
+          <span>Available: <strong>${available}</strong> (${availPct}%)</span>
+        </div>
+        <div class="chart-legend-item">
+          <span class="chart-legend-dot" style="background:#d97706"></span>
+          <span>Rented: <strong>${rented}</strong> (${rentPct}%)</span>
+        </div>
+        ${maint > 0 ? `
+          <div class="chart-legend-item">
+            <span class="chart-legend-dot" style="background:#64748b"></span>
+            <span>Maintenance: <strong>${maint}</strong></span>
+          </div>
+        ` : ''}
+      `;
+    }
+  }
+
+  // 2. Rental Trends Bar Chart
+  const trendCtx = document.getElementById('rentalsTrendChart');
+  if (trendCtx) {
+    const monthData = (data.rentalsByMonth && data.rentalsByMonth.length)
+      ? data.rentalsByMonth
+      : [{ month_label: 'Current', rental_count: (data.recentRentals ? data.recentRentals.length : 0), total_amount: data.totalRevenue || 0 }];
+
+    const monthLabels = monthData.map(m => m.month_label);
+    const rentalCounts = monthData.map(m => m.rental_count);
+    const revenueAmounts = monthData.map(m => parseFloat(m.total_amount || 0));
+
+    rentalsTrendChartInstance = new Chart(trendCtx, {
+      type: 'bar',
+      data: {
+        labels: monthLabels,
+        datasets: [
+          {
+            label: 'Rentals Booked',
+            data: rentalCounts,
+            backgroundColor: '#358dd5',
+            borderRadius: 6,
+            barThickness: 26,
+            yAxisID: 'y'
+          },
+          {
+            label: 'Total Revenue ($)',
+            data: revenueAmounts,
+            backgroundColor: '#20225d',
+            borderRadius: 6,
+            barThickness: 26,
+            yAxisID: 'y1'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          mode: 'index',
+          intersect: false
+        },
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            backgroundColor: '#20225d',
+            titleFont: { family: 'Inter', size: 13, weight: '600' },
+            bodyFont: { family: 'Inter', size: 12 },
+            padding: 10,
+            cornerRadius: 8
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { font: { family: 'Inter', size: 11 }, color: '#64748b' }
+          },
+          y: {
+            type: 'linear',
+            display: true,
+            position: 'left',
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1,
+              font: { family: 'Inter', size: 11 },
+              color: '#64748b'
+            },
+            grid: { color: 'rgba(226, 232, 240, 0.6)' }
+          },
+          y1: {
+            type: 'linear',
+            display: true,
+            position: 'right',
+            beginAtZero: true,
+            ticks: {
+              callback: val => '$' + val,
+              font: { family: 'Inter', size: 11 },
+              color: '#64748b'
+            },
+            grid: { display: false }
+          }
+        }
+      }
+    });
   }
 }
 
