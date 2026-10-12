@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Login — Car Rental Management System" />
+  <title>Login — CarRent</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ===========================
+       Design Tokens
+       =========================== */
+    :root {
+      --color-primary: #2c3e6b;
+      --color-primary-hover: #1e2d4f;
+      --color-bg: #f5f6fa;
+      --color-white: #ffffff;
+      --color-text: #2d3436;
+      --color-text-secondary: #636e72;
+      --color-border: #e0e0e0;
+      --color-danger: #c0392b;
+      --color-danger-bg: #fbeaea;
+      --radius: 8px;
+      --shadow-md: 0 4px 24px rgba(0,0,0,0.10);
+      --transition: 0.2s ease;
+    }
+
+    *, *::before, *::after {
+      margin: 0; padding: 0; box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background-color: var(--color-bg);
+      color: var(--color-text);
+      font-size: 15px;
+    }
+
+    /* ===========================
+       Layout
+       =========================== */
+    .login-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .login-card {
+      background: var(--color-white);
+      border-radius: 12px;
+      box-shadow: var(--shadow-md);
+      width: 100%;
+      max-width: 420px;
+      padding: 40px 36px;
+    }
+
+    /* ===========================
+       Brand header
+       =========================== */
+    .login-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .login-brand svg {
+      width: 32px;
+      height: 32px;
+      color: var(--color-primary);
+    }
+
+    .login-brand-name {
+      font-size: 1.45rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      letter-spacing: 0.2px;
+    }
+
+    .login-subtitle {
+      font-size: 0.88rem;
+      color: var(--color-text-secondary);
+      margin-bottom: 32px;
+    }
+
+    /* ===========================
+       Form elements
+       =========================== */
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--color-text);
+      margin-bottom: 6px;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      font-size: 0.92rem;
+      font-family: inherit;
+      color: var(--color-text);
+      background: var(--color-white);
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(44, 62, 107, 0.12);
+    }
+
+    .form-group input.has-toggle {
+      padding-right: 44px;
+    }
+
+    .toggle-pw {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--color-text-secondary);
+      transition: color var(--transition);
+    }
+
+    .toggle-pw:hover { color: var(--color-text); }
+    .toggle-pw svg { width: 18px; height: 18px; }
+
+    /* ===========================
+       Error message
+       =========================== */
+    .error-msg {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: var(--color-danger-bg);
+      color: var(--color-danger);
+      border: 1px solid rgba(192, 57, 43, 0.2);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-bottom: 18px;
+      line-height: 1.4;
+    }
+
+    .error-msg.visible {
+      display: flex;
+    }
+
+    .error-msg svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+
+    /* ===========================
+       Submit button
+       =========================== */
+    .btn-login {
+      width: 100%;
+      padding: 11px 18px;
+      background: var(--color-primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 0.95rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background var(--transition), transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .btn-login:hover:not(:disabled) {
+      background: var(--color-primary-hover);
+    }
+
+    .btn-login:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    .btn-login:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    /* ===========================
+       Spinner
+       =========================== */
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-wrapper">
+    <div class="login-card">
+
+      <!-- Brand -->
+      <div class="login-brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="1" y="3" width="15" height="13" rx="2" />
+          <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+          <circle cx="5.5" cy="18.5" r="2.5" />
+          <circle cx="18.5" cy="18.5" r="2.5" />
+        </svg>
+        <span class="login-brand-name">CarRent</span>
+      </div>
+      <p class="login-subtitle">Car Rental Management System — Sign in to continue</p>
+
+      <!-- Error message -->
+      <div class="error-msg" id="errorMsg" role="alert">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span id="errorText"></span>
+      </div>
+
+      <!-- Login form -->
+      <form id="loginForm" novalidate>
+        <div class="form-group">
+          <label for="loginEmail">Email Address</label>
+          <input
+            type="email"
+            id="loginEmail"
+            name="email"
+            placeholder="you@example.com"
+            autocomplete="email"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <div class="input-wrapper">
+            <input
+              type="password"
+              id="loginPassword"
+              name="password"
+              placeholder="Enter your password"
+              autocomplete="current-password"
+              class="has-toggle"
+              required
+            />
+            <button
+              type="button"
+              class="toggle-pw"
+              id="togglePw"
+              aria-label="Show or hide password"
+              title="Show / hide password"
+            >
+              <!-- Eye icon (shown when password is hidden) -->
+              <svg id="eyeOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <!-- Eye-off icon (shown when password is visible) -->
+              <svg id="eyeClosed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-login" id="loginBtn">
+          <span id="btnText">Sign In</span>
+        </button>
+      </form>
+
+    </div>
+  </div>
+
+  <script>
+    /* ===========================
+       Show / hide password toggle
+       =========================== */
+    const pwInput   = document.getElementById('loginPassword');
+    const toggleBtn = document.getElementById('togglePw');
+    const eyeOpen   = document.getElementById('eyeOpen');
+    const eyeClosed = document.getElementById('eyeClosed');
+
+    toggleBtn.addEventListener('click', () => {
+      const isHidden = pwInput.type === 'password';
+      pwInput.type     = isHidden ? 'text' : 'password';
+      eyeOpen.style.display   = isHidden ? 'none'  : '';
+      eyeClosed.style.display = isHidden ? ''      : 'none';
+    });
+
+    /* ===========================
+       Error display
+       =========================== */
+    const errorMsg  = document.getElementById('errorMsg');
+    const errorText = document.getElementById('errorText');
+
+    function showError(msg) {
+      errorText.textContent = msg;
+      errorMsg.classList.add('visible');
+    }
+
+    function clearError() {
+      errorMsg.classList.remove('visible');
+    }
+
+    /* ===========================
+       Loading state
+       =========================== */
+    const loginBtn = document.getElementById('loginBtn');
+    const btnText  = document.getElementById('btnText');
+
+    function setLoading(loading) {
+      loginBtn.disabled = loading;
+      if (loading) {
+        btnText.textContent = 'Signing in…';
+        const spinner = document.createElement('span');
+        spinner.className = 'spinner';
+        spinner.id = 'loginSpinner';
+        loginBtn.appendChild(spinner);
+      } else {
+        btnText.textContent = 'Sign In';
+        const s = document.getElementById('loginSpinner');
+        if (s) s.remove();
+      }
+    }
+
+    /* ===========================
+       Check if already logged in
+       =========================== */
+    (async () => {
+      try {
+        const res = await fetch('/api/auth/me');
+        if (res.ok) {
+          window.location.replace('/');
+        }
+      } catch (_) {
+        // not logged in — stay on page
+      }
+    })();
+
+    /* ===========================
+       Form submit
+       =========================== */
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearError();
+
+      const email    = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+
+      if (!email || !password) {
+        showError('Please enter your email and password.');
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          showError(data.error || 'Login failed. Please try again.');
+          return;
+        }
+
+        // Redirect to dashboard
+        window.location.replace('/');
+      } catch (err) {
+        showError('Unable to connect to the server. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    });
+  </script>
+
+</body>
+</html>

@@ -53,6 +53,11 @@ function getPool() {
     ssl: { rejectUnauthorized: false },
   });
 
+  _pool.on('error', (err) => {
+    // Prevent unhandled error crashes when Neon serverless pooler closes idle connections
+    console.warn('PostgreSQL pool idle client warning:', err.message);
+  });
+
   return _pool;
 }
 
@@ -90,8 +95,11 @@ async function initTables() {
         plate VARCHAR(100) NOT NULL,
         price_per_day NUMERIC(10, 2) NOT NULL DEFAULT 0,
         status VARCHAR(50) NOT NULL DEFAULT 'Available',
+        image_url TEXT,
         created_at TIMESTAMP DEFAULT NOW()
       );
+
+      ALTER TABLE cars ADD COLUMN IF NOT EXISTS image_url TEXT;
     `);
 
     await client.query(`
@@ -126,8 +134,58 @@ async function initTables() {
         customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
         amount NUMERIC(10, 2) NOT NULL,
         status VARCHAR(50) NOT NULL DEFAULT 'Unpaid',
+        payment_method VARCHAR(50) DEFAULT 'Cash',
+        payment_date DATE DEFAULT CURRENT_DATE,
+        notes TEXT,
+        reference_no VARCHAR(100),
+        recorded_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
         created_at TIMESTAMP DEFAULT NOW()
       );
+
+      ALTER TABLE payments ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'Cash';
+      ALTER TABLE payments ADD COLUMN IF NOT EXISTS payment_date DATE DEFAULT CURRENT_DATE;
+      ALTER TABLE payments ADD COLUMN IF NOT EXISTS notes TEXT;
+      ALTER TABLE payments ADD COLUMN IF NOT EXISTS reference_no VARCHAR(100);
+      ALTER TABLE payments ADD COLUMN IF NOT EXISTS recorded_by INTEGER REFERENCES users(id) ON DELETE SET NULL;
+
+      CREATE TABLE IF NOT EXISTS expenses (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        category VARCHAR(100) NOT NULL CHECK (category IN ('Fuel', 'Maintenance', 'Insurance', 'Staff Salaries', 'Other')),
+        amount NUMERIC(10, 2) NOT NULL CHECK (amount > 0),
+        expense_date DATE NOT NULL DEFAULT CURRENT_DATE,
+        payment_method VARCHAR(50) NOT NULL DEFAULT 'Cash' CHECK (payment_method IN ('Cash', 'Bank Transfer', 'Mobile Money')),
+        description TEXT,
+        recorded_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    // Users table for authentication
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) NOT NULL UNIQUE,
+        password_hash VARCHAR(255) NOT NULL,
+        full_name VARCHAR(255) NOT NULL,
+        role VARCHAR(50) NOT NULL DEFAULT 'staff' CHECK (role IN ('manager', 'staff')),
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    // Session store table for connect-pg-simple
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS session (
+        sid VARCHAR NOT NULL COLLATE "default",
+        sess JSON NOT NULL,
+        expire TIMESTAMP(6) NOT NULL,
+        CONSTRAINT session_pkey PRIMARY KEY (sid)
+      );
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS IDX_session_expire ON session (expire);
     `);
 
     console.log('✓ Database tables ready');
