@@ -39,6 +39,17 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Database connectivity test endpoint (does not require session)
+app.get('/api/test-db', async (req, res) => {
+  const start = Date.now();
+  try {
+    const r = await pool.query('SELECT NOW()');
+    res.json({ ok: true, now: r.rows[0].now, elapsedMs: Date.now() - start });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message, elapsedMs: Date.now() - start });
+  }
+});
+
 // Guard: if DATABASE_URL is missing, return friendly 500 error immediately
 // instead of letting session store or DB pool hang/crash
 app.use((req, res, next) => {
