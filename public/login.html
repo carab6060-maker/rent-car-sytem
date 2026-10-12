@@ -5,23 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Login — Car Rental Management System" />
   <title>Login — CarRent</title>
+  <link rel="icon" type="image/png" href="/images/logo.png" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     /* ===========================
        Design Tokens
        =========================== */
     :root {
-      --color-primary: #2c3e6b;
-      --color-primary-hover: #1e2d4f;
-      --color-bg: #f5f6fa;
+      --color-primary: #358dd5;
+      --color-primary-hover: #2677b8;
+      --color-navy: #20225d;
+      --color-navy-dark: #161845;
+      --color-bg: #f4f7fb;
       --color-white: #ffffff;
-      --color-text: #2d3436;
-      --color-text-secondary: #636e72;
-      --color-border: #e0e0e0;
+      --color-text: #0f172a;
+      --color-text-secondary: #64748b;
+      --color-border: #e2e8f0;
       --color-danger: #c0392b;
       --color-danger-bg: #fbeaea;
       --radius: 8px;
-      --shadow-md: 0 4px 24px rgba(0,0,0,0.10);
+      --shadow-md: 0 10px 30px rgba(32, 34, 93, 0.08);
       --transition: 0.2s ease;
     }
 
@@ -52,6 +55,7 @@
       background: var(--color-white);
       border-radius: 12px;
       box-shadow: var(--shadow-md);
+      border: 1px solid #eef2f6;
       width: 100%;
       max-width: 420px;
       padding: 40px 36px;
@@ -63,27 +67,28 @@
     .login-brand {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       margin-bottom: 8px;
     }
 
-    .login-brand svg {
-      width: 32px;
-      height: 32px;
-      color: var(--color-primary);
+    .login-brand-logo {
+      width: 42px;
+      height: 42px;
+      object-fit: contain;
+      flex-shrink: 0;
     }
 
     .login-brand-name {
-      font-size: 1.45rem;
+      font-size: 1.55rem;
       font-weight: 700;
-      color: var(--color-primary);
-      letter-spacing: 0.2px;
+      color: var(--color-navy);
+      letter-spacing: -0.2px;
     }
 
     .login-subtitle {
       font-size: 0.88rem;
       color: var(--color-text-secondary);
-      margin-bottom: 32px;
+      margin-bottom: 30px;
     }
 
     /* ===========================
@@ -120,7 +125,7 @@
     .form-group input:focus {
       outline: none;
       border-color: var(--color-primary);
-      box-shadow: 0 0 0 3px rgba(44, 62, 107, 0.12);
+      box-shadow: 0 0 0 3px rgba(53, 141, 213, 0.16);
     }
 
     .form-group input.has-toggle {
@@ -179,7 +184,7 @@
        =========================== */
     .btn-login {
       width: 100%;
-      padding: 11px 18px;
+      padding: 12px 18px;
       background: var(--color-primary);
       color: #fff;
       border: none;
@@ -188,16 +193,18 @@
       font-weight: 600;
       font-family: inherit;
       cursor: pointer;
-      transition: background var(--transition), transform 0.1s;
+      transition: background var(--transition), transform 0.1s, box-shadow var(--transition);
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      margin-top: 4px;
+      margin-top: 6px;
+      box-shadow: 0 2px 8px rgba(53, 141, 213, 0.25);
     }
 
     .btn-login:hover:not(:disabled) {
       background: var(--color-primary-hover);
+      box-shadow: 0 4px 14px rgba(53, 141, 213, 0.35);
     }
 
     .btn-login:active:not(:disabled) {
@@ -233,12 +240,7 @@
 
       <!-- Brand -->
       <div class="login-brand">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="1" y="3" width="15" height="13" rx="2" />
-          <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
-          <circle cx="5.5" cy="18.5" r="2.5" />
-          <circle cx="18.5" cy="18.5" r="2.5" />
-        </svg>
+        <img src="/images/logo.png" alt="Company Logo" class="login-brand-logo" />
         <span class="login-brand-name">CarRent</span>
       </div>
       <p class="login-subtitle">Car Rental Management System — Sign in to continue</p>
