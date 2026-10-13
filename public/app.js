@@ -179,6 +179,7 @@ function navigateTo(page) {
     customers: 'Customers',
     rentals:   'Rentals',
     payments:  'Payments',
+    expenses:  'Operating Expenses & Fleet Costs',
     users:     'User Management',
   };
   pageTitle.textContent = titles[page] || page;
@@ -194,6 +195,7 @@ function renderPage(page) {
     case 'customers':  renderCustomers(); break;
     case 'rentals':    renderRentals();   break;
     case 'payments':   renderPayments();  break;
+    case 'expenses':   renderExpenses();  break;
     case 'users':      renderUsers();     break;
   }
 }
@@ -489,18 +491,28 @@ async function renderDashboard() {
 
             <div class="dashboard-kpi-item">
               <div class="dashboard-kpi-top">
-                <span class="dashboard-kpi-title">Total Revenue Collected</span>
-                <span class="dashboard-kpi-val" style="color:var(--color-success);">$${totalRevenue.toFixed(2)}</span>
+                <span class="dashboard-kpi-title">Gross Revenue Collected</span>
+                <span class="dashboard-kpi-val" style="color:var(--color-navy);">$${totalRevenue.toFixed(2)}</span>
               </div>
-              <span style="font-size:0.75rem;color:var(--color-text-secondary);">Paid payments verified in Neon database</span>
+              <span style="font-size:0.75rem;color:var(--color-text-secondary);">Verified income from completed customer payments</span>
             </div>
 
             <div class="dashboard-kpi-item">
               <div class="dashboard-kpi-top">
-                <span class="dashboard-kpi-title">Active Fleet Status</span>
-                <span class="dashboard-kpi-val" style="font-size:0.95rem;color:var(--color-primary);">${availableCars} Ready to Rent</span>
+                <span class="dashboard-kpi-title">Total Operating Expenses</span>
+                <span class="dashboard-kpi-val" style="color:var(--color-danger);">$${(typeof data.totalExpenses === 'number' ? data.totalExpenses : parseFloat(data.totalExpenses || 0)).toFixed(2)}</span>
               </div>
-              <span style="font-size:0.75rem;color:var(--color-text-secondary);">${rentedCars} currently out with customers</span>
+              <span style="font-size:0.75rem;color:var(--color-text-secondary);">Fleet fuel, service, maintenance & staff expenses</span>
+            </div>
+
+            <div class="dashboard-kpi-item" style="border-left: 4px solid ${(typeof data.netProfit === 'number' ? data.netProfit : (totalRevenue - (data.totalExpenses || 0))) >= 0 ? 'var(--color-success)' : 'var(--color-danger)'}; background: #f8fafc;">
+              <div class="dashboard-kpi-top">
+                <span class="dashboard-kpi-title" style="color:var(--color-navy);font-weight:700">Net Profit (Faa'iidada Saafiga ah)</span>
+                <span class="dashboard-kpi-val" style="color:${(typeof data.netProfit === 'number' ? data.netProfit : (totalRevenue - (data.totalExpenses || 0))) >= 0 ? 'var(--color-success)' : 'var(--color-danger)'};font-size:1.25rem;">
+                  $${(typeof data.netProfit === 'number' ? data.netProfit : (totalRevenue - (data.totalExpenses || 0))).toFixed(2)}
+                </span>
+              </div>
+              <span style="font-size:0.75rem;color:var(--color-text-secondary);font-weight:500;">Net Profit = Gross Revenue &minus; Total Operating Expenses</span>
             </div>
           </div>
         </div>
@@ -2309,8 +2321,342 @@ window.markPaidWithModal = markPaidWithModal;
 window.deletePayment = deletePayment;
 window.setPaymentsStatusFilter = setPaymentsStatusFilter;
 window.setPaymentsMethodFilter = setPaymentsMethodFilter;
+
 // =====================================================
-// 6. USERS (Manager only)
+// 6. OPERATING EXPENSES & FLEET COSTS
+// =====================================================
+let expensesData = [];
+let expensesSummary = { totalExpenses: 0, thisMonthExpenses: 0, byCategory: [] };
+let expensesSearchQuery = '';
+let expensesCategoryFilter = 'all';
+
+async function renderExpenses() {
+  pageContainer.innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;color:#64748b;padding:40px 0;">
+      <div class="spinner"></div>
+      <p>Loading operating expenses & fleet costs...</p>
+    </div>
+  `;
+
+  try {
+    const [expenses, summary] = await Promise.all([
+      API.get('/api/expenses'),
+      API.get('/api/expenses/summary').catch(() => ({ totalExpenses: 0, thisMonthExpenses: 0, byCategory: [] }))
+    ]);
+
+    expensesData = expenses;
+    expensesSummary = summary;
+    renderExpensesView();
+  } catch (err) {
+    pageContainer.innerHTML = `
+      <div class="empty-state">
+        <p style="color:var(--color-danger)">Failed to load expenses: ${esc(err.message)}</p>
+        <button class="btn btn-secondary" onclick="renderExpenses()" style="margin-top:12px">Try Again</button>
+      </div>
+    `;
+  }
+}
+
+function renderExpensesView() {
+  const isMgr = isManager();
+  const topCat = (expensesSummary.byCategory && expensesSummary.byCategory[0]) 
+    ? `${expensesSummary.byCategory[0].category} ($${parseFloat(expensesSummary.byCategory[0].total).toFixed(0)})`
+    : 'None';
+
+  // Filter expensesData
+  const filtered = expensesData.filter(e => {
+    if (expensesCategoryFilter !== 'all' && e.category !== expensesCategoryFilter) {
+      return false;
+    }
+    if (expensesSearchQuery) {
+      const q = expensesSearchQuery.toLowerCase();
+      const title = (e.title || '').toLowerCase();
+      const desc = (e.description || '').toLowerCase();
+      const cat = (e.category || '').toLowerCase();
+      return title.includes(q) || desc.includes(q) || cat.includes(q);
+    }
+    return true;
+  });
+
+  const categories = ['all', 'Fuel', 'Maintenance', 'Insurance', 'Staff Salaries', 'Other'];
+  const pillsHTML = categories.map(cat => {
+    const active = expensesCategoryFilter === cat ? 'active' : '';
+    const label = cat === 'all' ? 'All Expenses' : cat;
+    return `<button type="button" class="cars-filter-pill ${active}" onclick="setExpensesCategoryFilter('${cat}')">${label}</button>`;
+  }).join('');
+
+  let tableRows = '';
+  if (filtered.length === 0) {
+    tableRows = `<tr><td colspan="7">${emptyStateHTML(expensesSearchQuery || expensesCategoryFilter !== 'all' ? 'No matching expenses found.' : 'No operating expenses recorded yet.')}</td></tr>`;
+  } else {
+    tableRows = filtered.map(e => {
+      const catBadgeClass = 'badge-cat-' + (e.category || 'other').toLowerCase().replace(/\s+/g, '-');
+      const dateStr = e.expense_date ? String(e.expense_date).split('T')[0] : '—';
+      const method = e.payment_method || 'Cash';
+      const userLabel = e.recorded_by_name ? esc(e.recorded_by_name) : 'Staff';
+      const editBtn = `<button class="btn-icon" onclick="openExpenseForm(${e.id})" title="Edit Expense">${Icons.edit}</button>`;
+      const deleteBtn = isMgr 
+        ? `<button class="btn-icon danger" onclick="deleteExpense(${e.id})" title="Delete Expense">${Icons.trash}</button>`
+        : '';
+
+      return `
+        <tr>
+          <td><span style="font-weight:600;color:var(--color-navy)">${dateStr}</span></td>
+          <td>
+            <div>
+              <div style="font-weight:600;color:var(--color-text)">${esc(e.title)}</div>
+              ${e.description ? `<small class="text-muted" style="display:block;margin-top:2px">${esc(e.description)}</small>` : ''}
+            </div>
+          </td>
+          <td><span class="badge ${catBadgeClass}">${esc(e.category)}</span></td>
+          <td><span class="method-badge ${(method || '').toLowerCase().replace(/\s+/g, '-')}">${esc(method)}</span></td>
+          <td><strong style="color:var(--color-danger);font-size:0.95rem;">-$${Number(e.amount).toFixed(2)}</strong></td>
+          <td><span class="text-muted" style="font-size:0.84rem">${userLabel}</span></td>
+          <td>
+            <div class="actions-cell">
+              ${editBtn}
+              ${deleteBtn}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  pageContainer.innerHTML = `
+    <div class="cars-view-wrapper">
+      <!-- Section Header -->
+      <div class="cars-page-header">
+        <div class="cars-header-title">
+          <h2>Operating Expenses & Fleet Costs</h2>
+          <span class="cars-header-badge">${expensesData.length} records</span>
+        </div>
+        <button class="btn btn-primary" onclick="openExpenseForm()">
+          ${Icons.plus}
+          <span>Record Expense</span>
+        </button>
+      </div>
+
+      <!-- Financial Metrics Cards -->
+      <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+        <div class="stat-card" style="border-left-color: var(--color-danger);">
+          <span class="stat-label">Total Operating Expenses</span>
+          <span class="stat-value" style="color:var(--color-danger)">$${expensesSummary.totalExpenses.toFixed(2)}</span>
+        </div>
+        <div class="stat-card warning">
+          <span class="stat-label">Expenses This Month</span>
+          <span class="stat-value" style="color:var(--color-warning)">$${expensesSummary.thisMonthExpenses.toFixed(2)}</span>
+        </div>
+        <div class="stat-card info">
+          <span class="stat-label">Top Expense Category</span>
+          <span class="stat-value" style="font-size:1.1rem;margin-top:4px;">${esc(topCat)}</span>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="cars-toolbar">
+        <div class="cars-search-box">
+          <span class="cars-search-icon">${Icons.search}</span>
+          <input 
+            type="text" 
+            id="expenseSearchInput" 
+            class="cars-search-input" 
+            placeholder="Search by expense title, category, or note..." 
+            value="${esc(expensesSearchQuery)}"
+          />
+          <button 
+            id="expenseSearchClear" 
+            class="cars-search-clear ${expensesSearchQuery ? 'visible' : ''}" 
+            onclick="clearExpenseSearch()" 
+            type="button"
+          >
+            ${Icons.clear}
+          </button>
+        </div>
+
+        <div class="cars-filters-row">
+          <div class="cars-status-pills">
+            ${pillsHTML}
+          </div>
+        </div>
+      </div>
+
+      <!-- Table Wrapper -->
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Expense Item / Reason</th>
+              <th>Category</th>
+              <th>Payment Method</th>
+              <th>Amount ($)</th>
+              <th>Recorded By</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  // Bind Search events
+  const searchInput = $('#expenseSearchInput');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      expensesSearchQuery = e.target.value.trim();
+      const clearBtn = $('#expenseSearchClear');
+      if (clearBtn) clearBtn.classList.toggle('visible', !!expensesSearchQuery);
+      renderExpensesView();
+    });
+  }
+}
+
+function setExpensesCategoryFilter(cat) {
+  expensesCategoryFilter = cat;
+  renderExpensesView();
+}
+
+function clearExpenseSearch() {
+  expensesSearchQuery = '';
+  renderExpensesView();
+}
+
+function openExpenseForm(expenseId = null) {
+  const isEdit = typeof expenseId === 'number';
+  const expense = isEdit ? expensesData.find(e => e.id === expenseId) : null;
+  const today = new Date().toISOString().split('T')[0];
+
+  const defaultDate = expense && expense.expense_date ? String(expense.expense_date).split('T')[0] : today;
+  const defaultTitle = expense ? (expense.title || '') : '';
+  const defaultCategory = expense ? (expense.category || 'Maintenance') : 'Maintenance';
+  const defaultAmount = expense ? (expense.amount || '') : '';
+  const defaultMethod = expense ? (expense.payment_method || 'Cash') : 'Cash';
+  const defaultDesc = expense ? (expense.description || '') : '';
+
+  const formHTML = `
+    <form id="expenseForm">
+      <div class="form-group">
+        <label for="expTitle">Expense Title / Item <span class="required">*</span></label>
+        <input 
+          type="text" 
+          id="expTitle" 
+          placeholder="e.g. Engine oil change & filter for Toyota Camry" 
+          value="${esc(defaultTitle)}" 
+          required 
+        />
+      </div>
+
+      <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="form-group">
+          <label for="expCategory">Category <span class="required">*</span></label>
+          <select id="expCategory" required>
+            <option value="Maintenance" ${defaultCategory === 'Maintenance' ? 'selected' : ''}>Maintenance (Dayactirka)</option>
+            <option value="Fuel" ${defaultCategory === 'Fuel' ? 'selected' : ''}>Fuel (Shidaalka)</option>
+            <option value="Insurance" ${defaultCategory === 'Insurance' ? 'selected' : ''}>Insurance (Caymiska)</option>
+            <option value="Staff Salaries" ${defaultCategory === 'Staff Salaries' ? 'selected' : ''}>Staff Salaries (Mushaaraadka)</option>
+            <option value="Other" ${defaultCategory === 'Other' ? 'selected' : ''}>Other (Kharashyo Kale)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="expAmount">Amount ($ USD) <span class="required">*</span></label>
+          <input 
+            type="number" 
+            id="expAmount" 
+            step="0.01" 
+            min="0.01" 
+            placeholder="0.00" 
+            value="${esc(String(defaultAmount))}" 
+            required 
+          />
+        </div>
+      </div>
+
+      <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="form-group">
+          <label for="expDate">Expense Date <span class="required">*</span></label>
+          <input type="date" id="expDate" value="${defaultDate}" required />
+        </div>
+
+        <div class="form-group">
+          <label for="expMethod">Payment Method <span class="required">*</span></label>
+          <select id="expMethod" required>
+            <option value="Cash" ${defaultMethod === 'Cash' ? 'selected' : ''}>Cash</option>
+            <option value="Bank Transfer" ${defaultMethod === 'Bank Transfer' ? 'selected' : ''}>Bank Transfer</option>
+            <option value="Mobile Money" ${defaultMethod === 'Mobile Money' ? 'selected' : ''}>Mobile Money</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="expDesc">Notes & Details (Optional)</label>
+        <textarea 
+          id="expDesc" 
+          rows="3" 
+          placeholder="Receipt notes, garage name, vendor invoice number..."
+        >${esc(defaultDesc)}</textarea>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">${isEdit ? 'Save Changes' : 'Record Expense'}</button>
+      </div>
+    </form>
+  `;
+
+  openModal(isEdit ? 'Edit Operating Expense' : 'Record New Operating Expense', formHTML);
+
+  $('#expenseForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const body = {
+      title: $('#expTitle').value.trim(),
+      category: $('#expCategory').value,
+      amount: parseFloat($('#expAmount').value),
+      expense_date: $('#expDate').value,
+      payment_method: $('#expMethod').value,
+      description: $('#expDesc').value.trim() || null,
+    };
+
+    try {
+      if (isEdit) {
+        await API.put(`/api/expenses/${expenseId}`, body);
+        showToast('Expense updated successfully');
+      } else {
+        await API.post('/api/expenses', body);
+        showToast('Expense recorded successfully');
+      }
+      closeModal();
+      renderExpenses();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  });
+}
+
+function deleteExpense(id) {
+  openConfirm('Are you sure you want to delete this expense record?', async () => {
+    try {
+      await API.delete(`/api/expenses/${id}`);
+      showToast('Expense record deleted');
+      renderExpenses();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  });
+}
+
+window.openExpenseForm = openExpenseForm;
+window.deleteExpense = deleteExpense;
+window.setExpensesCategoryFilter = setExpensesCategoryFilter;
+window.clearExpenseSearch = clearExpenseSearch;
+window.renderExpenses = renderExpenses;
+
+// =====================================================
+// 7. USERS (Manager only)
 // =====================================================
 async function renderUsers() {
   if (!isManager()) {
@@ -2456,6 +2802,9 @@ window.closeModal               = closeModal;
 window.openRentalAgreementModal = openRentalAgreementModal;
 window.openPaymentReceiptModal  = openPaymentReceiptModal;
 window.closePrintModal          = closePrintModal;
+window.openExpenseForm          = openExpenseForm;
+window.deleteExpense            = deleteExpense;
+window.renderExpenses           = renderExpenses;
 
 // =====================================================
 // INIT — check auth, then render

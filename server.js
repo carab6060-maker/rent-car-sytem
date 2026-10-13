@@ -352,13 +352,19 @@ app.get('/api/dashboard', requireAuth, async (req, res) => {
     `);
 
     const revenueSummary = await pool.query(`SELECT COALESCE(SUM(amount), 0)::numeric as total_revenue FROM payments WHERE status = 'Paid'`);
+    const expenseSummary = await pool.query(`SELECT COALESCE(SUM(amount), 0)::numeric as total_expenses FROM expenses`);
+
+    const rev = parseFloat(revenueSummary.rows[0].total_revenue || 0);
+    const exp = parseFloat(expenseSummary.rows[0].total_expenses || 0);
 
     res.json({
       totalCars: parseInt(totalCars.rows[0].count),
       availableCars: parseInt(available.rows[0].count),
       rentedCars: parseInt(rented.rows[0].count),
       totalCustomers: parseInt(totalCustomers.rows[0].count),
-      totalRevenue: parseFloat(revenueSummary.rows[0].total_revenue || 0),
+      totalRevenue: rev,
+      totalExpenses: exp,
+      netProfit: rev - exp,
       fleetStatus: fleetStatus.rows,
       recentRentals: recentRentals.rows,
       rentalsByMonth: rentalsByMonth.rows,
@@ -944,6 +950,135 @@ app.delete('/api/payments/:id', requireManager, async (req, res) => {
   }
 });
 
+// =====================================================
+// EXPENSES & FLEET COSTS (requireAuth)
+// =====================================================
+
+/** GET /api/expenses — List all expenses */
+app.get('/api/expenses', requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT e.*, u.full_name AS recorded_by_name
+      FROM expenses e
+      LEFT JOIN users u ON e.recorded_by = u.id
+      ORDER BY e.expense_date DESC, e.id DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Get expenses error:', err);
+    res.status(500).json({ error: 'Failed to load expenses' });
+  }
+});
+
+/** GET /api/expenses/summary — Financial stats on expenses */
+app.get('/api/expenses/summary', requireAuth, async (req, res) => {
+  try {
+    const totalExp = await pool.query('SELECT COALESCE(SUM(amount), 0)::numeric AS total FROM expenses');
+    const thisMonth = await pool.query(`
+      SELECT COALESCE(SUM(amount), 0)::numeric AS total
+      FROM expenses
+      WHERE DATE_TRUNC('month', expense_date) = DATE_TRUNC('month', CURRENT_DATE)
+    `);
+    const byCategory = await pool.query(`
+      SELECT category, COALESCE(SUM(amount), 0)::numeric AS total, COUNT(*)::int AS count
+      FROM expenses
+      GROUP BY category
+      ORDER BY total DESC
+    `);
+    res.json({
+      totalExpenses: parseFloat(totalExp.rows[0].total || 0),
+      thisMonthExpenses: parseFloat(thisMonth.rows[0].total || 0),
+      byCategory: byCategory.rows,
+    });
+  } catch (err) {
+    console.error('Get expenses summary error:', err);
+    res.status(500).json({ error: 'Failed to load expenses summary' });
+  }
+});
+
+/** POST /api/expenses — Record new operating expense */
+app.post('/api/expenses', requireAuth, async (req, res) => {
+  try {
+    const { title, category, amount, expense_date, payment_method, description } = req.body || {};
+    if (!title || !category || amount === undefined || amount === null) {
+      return res.status(400).json({ error: 'Title, category, and amount are required' });
+    }
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      return res.status(400).json({ error: 'Amount must be greater than zero' });
+    }
+    const validCategories = ['Fuel', 'Maintenance', 'Insurance', 'Staff Salaries', 'Other'];
+    if (!validCategories.includes(category)) {
+      return res.status(400).json({ error: 'Invalid category' });
+    }
+    const validMethods = ['Cash', 'Bank Transfer', 'Mobile Money'];
+    const method = validMethods.includes(payment_method) ? payment_method : 'Cash';
+    const dateVal = expense_date || new Date().toISOString().split('T')[0];
+    const userId = req.session && req.session.userId ? req.session.userId : null;
+
+    const result = await pool.query(`
+      INSERT INTO expenses (title, category, amount, expense_date, payment_method, description, recorded_by)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *
+    `, [title.trim(), category, numAmount, dateVal, method, description ? description.trim() : null, userId]);
+
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Create expense error:', err);
+    res.status(500).json({ error: 'Failed to record expense' });
+  }
+});
+
+/** PUT /api/expenses/:id — Edit an existing expense */
+app.put('/api/expenses/:id', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, category, amount, expense_date, payment_method, description } = req.body || {};
+    if (!title || !category || amount === undefined || amount === null) {
+      return res.status(400).json({ error: 'Title, category, and amount are required' });
+    }
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      return res.status(400).json({ error: 'Amount must be greater than zero' });
+    }
+    const validCategories = ['Fuel', 'Maintenance', 'Insurance', 'Staff Salaries', 'Other'];
+    if (!validCategories.includes(category)) {
+      return res.status(400).json({ error: 'Invalid category' });
+    }
+    const validMethods = ['Cash', 'Bank Transfer', 'Mobile Money'];
+    const method = validMethods.includes(payment_method) ? payment_method : 'Cash';
+
+    const result = await pool.query(`
+      UPDATE expenses
+      SET title = $1, category = $2, amount = $3, expense_date = $4, payment_method = $5, description = $6, updated_at = NOW()
+      WHERE id = $7
+      RETURNING *
+    `, [title.trim(), category, numAmount, expense_date, method, description ? description.trim() : null, id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Expense record not found' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Update expense error:', err);
+    res.status(500).json({ error: 'Failed to update expense' });
+  }
+});
+
+/** DELETE /api/expenses/:id — Manager only (Staff cannot delete financial expense records) */
+app.delete('/api/expenses/:id', requireManager, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('DELETE FROM expenses WHERE id = $1 RETURNING id', [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Expense record not found' });
+    }
+    res.json({ message: 'Expense record deleted' });
+  } catch (err) {
+    console.error('Delete expense error:', err);
+    res.status(500).json({ error: 'Failed to delete expense' });
+  }
+});
 
 // =====================================================
 // AVAILABLE CARS (for rental form dropdown)
