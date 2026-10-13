@@ -149,6 +149,10 @@ const confirmCancel  = $('#confirmCancel');
 const confirmClose   = $('#confirmClose');
 const sidebar        = $('#sidebar');
 const menuToggle     = $('#menuToggle');
+const printModalOverlay = $('#printModalOverlay');
+const printDocTitle     = $('#printDocTitle');
+const printModalBody    = $('#printModalBody');
+const printModalCloseBtn= $('#printModalCloseBtn');
 
 // =====================================================
 // NAVIGATION
@@ -215,6 +219,24 @@ modalClose.addEventListener('click', closeModal);
 modalOverlay.addEventListener('click', (e) => {
   if (e.target === modalOverlay) closeModal();
 });
+
+// Print Modal Helpers
+function openPrintModal(title, bodyHTML) {
+  if (printDocTitle) printDocTitle.textContent = title;
+  if (printModalBody) printModalBody.innerHTML = bodyHTML;
+  if (printModalOverlay) printModalOverlay.classList.add('open');
+}
+
+function closePrintModal() {
+  if (printModalOverlay) printModalOverlay.classList.remove('open');
+}
+
+if (printModalOverlay) {
+  printModalOverlay.addEventListener('click', (e) => {
+    if (e.target === printModalOverlay) closePrintModal();
+  });
+}
+window.closePrintModal = closePrintModal;
 
 // =====================================================
 // CONFIRM DIALOG
@@ -1420,6 +1442,7 @@ async function renderRentals() {
         const carLabel = r.car_name ? `${r.car_name} (${r.car_plate})` : 'Unknown';
         const custLabel = r.customer_name || 'Unknown';
 
+        const printBtn = `<button class="btn-icon" onclick="openRentalAgreementModal(${r.id})" title="Print Rental Agreement / Heshiiska">${Icons.printer}</button>`;
         const returnBtn = r.status === 'Rented'
           ? `<button class="btn-icon" onclick="returnRental(${r.id})" title="Return Car">${Icons.undo}</button>`
           : '';
@@ -1439,6 +1462,7 @@ async function renderRentals() {
             <td><span class="badge ${statusBadge}">${r.status}</span></td>
             <td>
               <div class="actions-cell">
+                ${printBtn}
                 ${returnBtn}
                 ${deleteBtn}
               </div>
@@ -1559,10 +1583,13 @@ async function openRentalForm() {
       };
 
       try {
-        await API.post('/api/rentals', body);
+        const createdRental = await API.post('/api/rentals', body);
         showToast('Rental created successfully');
         closeModal();
         renderRentals();
+        if (createdRental && createdRental.id) {
+          setTimeout(() => openRentalAgreementModal(createdRental.id), 200);
+        }
       } catch (err) {
         showToast(err.message, true);
       }
@@ -1595,6 +1622,295 @@ window.deleteRental = function(id) {
     }
   });
 };
+
+// =====================================================
+// PRINTABLE AGREEMENT & RECEIPT GENERATORS
+// =====================================================
+async function openRentalAgreementModal(rentalId) {
+  try {
+    let r = null;
+    try {
+      r = await API.get(`/api/rentals/${rentalId}`);
+    } catch (e) {
+      const list = await API.get('/api/rentals');
+      r = list.find(x => x.id === rentalId);
+    }
+
+    if (!r) {
+      showToast('Rental record not found', true);
+      return;
+    }
+
+    const startDate = r.start_date ? r.start_date.split('T')[0] : '—';
+    const returnDate = r.return_date ? r.return_date.split('T')[0] : '—';
+    const issueDate = r.created_at ? r.created_at.split('T')[0] : new Date().toISOString().split('T')[0];
+    const totalDays = r.total_days || 1;
+    const pricePerDay = Number(r.price_per_day || 0).toFixed(2);
+    const totalPrice = Number(r.total_price || 0).toFixed(2);
+    const agrNo = `AGR-${String(r.id).padStart(5, '0')}`;
+    const custId = `CUST-${String(r.customer_id).padStart(4, '0')}`;
+    const statusClass = (r.status || 'Rented').toLowerCase();
+
+    const docHTML = `
+      <div class="printable-document rental-agreement-doc">
+        <!-- Top Header -->
+        <div class="doc-header">
+          <div class="doc-brand">
+            <img src="/images/logo.png?v=2" alt="CarRent Logo" class="doc-logo" />
+            <div>
+              <h1 class="doc-company-name">CarRent Management</h1>
+              <p class="doc-company-tagline">Official Vehicle Rental Agreement & Contract</p>
+              <p class="doc-company-meta">Mogadishu, Somalia | Tel: +252 61 000 0000 | Email: rentals@carrent.so</p>
+            </div>
+          </div>
+          <div class="doc-meta-badge">
+            <span class="doc-type-label">RENTAL CONTRACT</span>
+            <span class="doc-number">${agrNo}</span>
+            <span class="doc-date">Issue Date: ${issueDate}</span>
+            <span class="doc-status-badge ${statusClass}">${(r.status || 'Active').toUpperCase()}</span>
+          </div>
+        </div>
+
+        <div class="doc-divider"></div>
+
+        <!-- 2-Column Info Cards -->
+        <div class="doc-grid-2">
+          <div class="doc-section-card">
+            <h3 class="doc-section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Customer Information / Macmiilka
+            </h3>
+            <table class="doc-info-table">
+              <tr><th>Full Name:</th><td><strong>${esc(r.customer_name || '—')}</strong></td></tr>
+              <tr><th>Phone Number:</th><td>${esc(r.customer_phone || '—')}</td></tr>
+              <tr><th>Driver License #:</th><td><code>${esc(r.customer_license || '—')}</code></td></tr>
+              <tr><th>Customer Ref:</th><td>${custId}</td></tr>
+            </table>
+          </div>
+
+          <div class="doc-section-card">
+            <h3 class="doc-section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+              Vehicle Information / Gaariga
+            </h3>
+            <table class="doc-info-table">
+              <tr><th>Vehicle:</th><td><strong>${esc(r.car_name || '—')}</strong></td></tr>
+              <tr><th>Model / Type:</th><td>${esc(r.car_model || 'Standard')}</td></tr>
+              <tr><th>Plate Number:</th><td><span class="doc-plate">${esc(r.car_plate || '—')}</span></td></tr>
+              <tr><th>Daily Rate:</th><td>$${pricePerDay} / day</td></tr>
+            </table>
+          </div>
+        </div>
+
+        <!-- Rental Period & Financials -->
+        <div class="doc-section-card" style="margin-top: 16px;">
+          <h3 class="doc-section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Rental Schedule & Charges / Muddada & Xisaabta
+          </h3>
+          <table class="doc-financial-table">
+            <thead>
+              <tr>
+                <th>Start Date (Bilow)</th>
+                <th>Return Date (Dhammaad)</th>
+                <th>Total Days</th>
+                <th>Daily Rate</th>
+                <th style="text-align:right">Total Cost (Wadarta)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>${startDate}</strong></td>
+                <td><strong>${returnDate}</strong></td>
+                <td><strong>${totalDays} day(s)</strong></td>
+                <td>$${pricePerDay}</td>
+                <td style="text-align:right"><strong class="doc-total-price">$${totalPrice}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Terms & Conditions -->
+        <div class="doc-terms-box">
+          <h4>Heshiiska & Shuruudaha Kirada (Terms & Conditions):</h4>
+          <ol>
+            <li><strong>Mas'uuliyadda Gaariga:</strong> Macmiilku wuxuu si buuxda mas'uul uga yahay xaaladda iyo ilaalinta gaariga laga bilaabo saacadda wareejinta ilaa dib u soo celinta.</li>
+            <li><strong>Soo Celinta Xilligii Lagu Heshiiyay:</strong> Gaariga waa in lagu soo celiyaa taariikhda heshiiska ku xusan. Dib u dhac kasta oo aan hore loo ogeysiin waxaa laga qaadayaa khidmad maalinle ah oo dheeraad ah.</li>
+            <li><strong>Shidaalka (Fuel Policy):</strong> Gaariga waxaa lagu wareejiyay heer shidaal oo cayiman, waana in lagu soo celiyaa isla heerkaas ama ka badan.</li>
+            <li><strong>Shilalka & Waxyeellada:</strong> Wixii shil ama khasaare ah ee ku yimaada gaariga, macmiilka ayaa si degdeg ah ugu war-gelinaya shirkadda iyo booliska, wixii dayactir ahna dusha u ridanaya.</li>
+          </ol>
+        </div>
+
+        <!-- Signatures -->
+        <div class="doc-signatures-grid">
+          <div class="doc-signature-block">
+            <div class="sig-line"></div>
+            <p class="sig-name">Authorized Signature (Shirkadda)</p>
+            <p class="sig-sub">CarRent Management Representative</p>
+            <p class="sig-date">Date: ________________________</p>
+          </div>
+          <div class="doc-signature-block">
+            <div class="sig-line"></div>
+            <p class="sig-name">${esc(r.customer_name || 'Customer')} (Macmiilka)</p>
+            <p class="sig-sub">Renter Signature / Saxiixa Macmiilka</p>
+            <p class="sig-date">Date: ________________________</p>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="doc-footer">
+          <p>Waad ku mahadsan tahay doorashadaada CarRent! | Thank you for choosing CarRent.</p>
+          <small>This agreement is legally binding once signed by both parties.</small>
+        </div>
+      </div>
+    `;
+
+    openPrintModal(`Rental Agreement — ${agrNo}`, docHTML);
+  } catch (err) {
+    console.error('Error opening rental agreement:', err);
+    showToast('Failed to generate rental agreement', true);
+  }
+}
+window.openRentalAgreementModal = openRentalAgreementModal;
+
+async function openPaymentReceiptModal(paymentId) {
+  try {
+    let p = null;
+    try {
+      p = await API.get(`/api/payments/${paymentId}`);
+    } catch (e) {
+      const list = await API.get('/api/payments');
+      p = list.find(x => x.id === paymentId);
+    }
+
+    if (!p) {
+      showToast('Payment record not found', true);
+      return;
+    }
+
+    const recNo = `REC-${String(p.id).padStart(5, '0')}`;
+    const dateStr = p.payment_date ? p.payment_date.split('T')[0] : (p.created_at ? p.created_at.split('T')[0] : new Date().toISOString().split('T')[0]);
+    const amount = Number(p.amount || 0).toFixed(2);
+    const method = p.payment_method || 'Cash';
+    const isPaid = p.status === 'Paid';
+    const refNo = p.reference_no || 'N/A';
+    const startDate = p.rental_start_date ? p.rental_start_date.split('T')[0] : '—';
+    const returnDate = p.rental_return_date ? p.rental_return_date.split('T')[0] : '—';
+    const carText = p.car_name ? `${p.car_name} ${p.car_model || ''} (${p.car_plate || ''})` : `Rental #${p.rental_id}`;
+
+    const docHTML = `
+      <div class="printable-document payment-receipt-doc">
+        <!-- Header -->
+        <div class="doc-header">
+          <div class="doc-brand">
+            <img src="/images/logo.png?v=2" alt="CarRent Logo" class="doc-logo" />
+            <div>
+              <h1 class="doc-company-name">CarRent Management</h1>
+              <p class="doc-company-tagline">Official Payment Receipt & Invoice</p>
+              <p class="doc-company-meta">Mogadishu, Somalia | Tel: +252 61 000 0000 | accounts@carrent.so</p>
+            </div>
+          </div>
+          <div class="doc-meta-badge">
+            <span class="doc-type-label">OFFICIAL RECEIPT</span>
+            <span class="doc-number">${recNo}</span>
+            <span class="doc-date">Date: ${dateStr}</span>
+            ${isPaid ? '<span class="receipt-paid-stamp">PAID</span>' : '<span class="doc-status-badge rented">PENDING</span>'}
+          </div>
+        </div>
+
+        <div class="doc-divider"></div>
+
+        <!-- 2-column info cards -->
+        <div class="doc-grid-2">
+          <div class="doc-section-card">
+            <h3 class="doc-section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Received From / Laga Qabtay:
+            </h3>
+            <table class="doc-info-table">
+              <tr><th>Customer:</th><td><strong>${esc(p.customer_name || '—')}</strong></td></tr>
+              <tr><th>Phone Number:</th><td>${esc(p.customer_phone || '—')}</td></tr>
+              <tr><th>License #:</th><td><code>${esc(p.customer_license || '—')}</code></td></tr>
+              <tr><th>Rental Ref:</th><td>Rental #${p.rental_id}</td></tr>
+            </table>
+          </div>
+
+          <div class="doc-section-card">
+            <h3 class="doc-section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              Payment Details / Qaabka Bixinta:
+            </h3>
+            <table class="doc-info-table">
+              <tr><th>Method:</th><td><strong>${esc(method)}</strong></td></tr>
+              <tr><th>Reference #:</th><td><code>${esc(refNo)}</code></td></tr>
+              <tr><th>Collected By:</th><td>${esc(p.recorded_by_name || 'System Cashier')}</td></tr>
+              <tr><th>Payment Date:</th><td>${dateStr}</td></tr>
+            </table>
+          </div>
+        </div>
+
+        <!-- Breakdown table -->
+        <div class="doc-section-card" style="margin-top: 16px;">
+          <h3 class="doc-section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Payment Breakdown / Xisaabta
+          </h3>
+          <table class="doc-financial-table">
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th>Vehicle</th>
+                <th>Rental Schedule</th>
+                <th style="text-align:right">Amount Paid</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Vehicle Rental Payment #${p.rental_id}</strong></td>
+                <td>${esc(carText)}</td>
+                <td>${startDate} to ${returnDate}</td>
+                <td style="text-align:right"><strong class="doc-total-price">$${amount}</strong></td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="3" style="text-align:right"><strong>Total Received / Wadarta:</strong></td>
+                <td style="text-align:right"><strong class="doc-total-price" style="font-size:1.15rem">$${amount}</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+          ${p.notes ? `<p class="receipt-notes"><strong>Notes:</strong> ${esc(p.notes)}</p>` : ''}
+        </div>
+
+        <!-- Signatures -->
+        <div class="doc-signatures-grid" style="margin-top: 40px;">
+          <div class="doc-signature-block">
+            <div class="sig-line"></div>
+            <p class="sig-name">${esc(p.recorded_by_name || 'Cashier')}</p>
+            <p class="sig-sub">Authorized Cashier / Qasnajiga</p>
+          </div>
+          <div class="doc-signature-block">
+            <div class="sig-line"></div>
+            <p class="sig-name">${esc(p.customer_name || 'Customer')}</p>
+            <p class="sig-sub">Customer Signature / Macmiilka</p>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="doc-footer">
+          <p>Bixintaadu way xaqiijisan tahay | Thank you for your payment!</p>
+          <small>Official electronic receipt issued by CarRent Management System.</small>
+        </div>
+      </div>
+    `;
+
+    openPrintModal((isPaid ? 'Payment Receipt — ' : 'Rental Invoice — ') + recNo, docHTML);
+  } catch (err) {
+    console.error('Error opening receipt:', err);
+    showToast('Failed to generate payment receipt', true);
+  }
+}
+window.openPaymentReceiptModal = openPaymentReceiptModal;
 
 // =====================================================
 // 5. PAYMENTS
@@ -1652,6 +1968,8 @@ function renderPaymentsTable() {
       const refStr = p.reference_no ? `<span class="ref-pill">${esc(p.reference_no)}</span>` : '<span class="text-muted">—</span>';
       const userLabel = p.recorded_by_name ? esc(p.recorded_by_name) : '<span class="text-muted">System</span>';
 
+      const printReceiptBtn = `<button class="btn-icon" onclick="openPaymentReceiptModal(${p.id})" title="${isPaid ? 'Print Official Receipt / Rasiid' : 'Print Invoice / Qaansheeg'}">${isPaid ? Icons.printer : Icons.receipt}</button>`;
+
       const actionBtn = !isPaid 
         ? `<button class="btn btn-sm btn-primary" onclick="markPaidWithModal(${p.id}, ${p.amount}, ${p.rental_id})">Receive Payment</button>`
         : '';
@@ -1683,6 +2001,7 @@ function renderPaymentsTable() {
           <td>${userLabel}</td>
           <td>
             <div class="actions-cell">
+              ${printReceiptBtn}
               ${actionBtn}
               ${deleteBtn}
             </div>
@@ -1889,10 +2208,13 @@ async function openRecordPaymentModal(preselectedRentalId = null) {
       };
 
       try {
-        await API.post('/api/payments', body);
+        const createdPay = await API.post('/api/payments', body);
         showToast('Payment received and recorded successfully.');
         closeModal();
         renderPayments();
+        if (createdPay && createdPay.id) {
+          setTimeout(() => openPaymentReceiptModal(createdPay.id), 200);
+        }
       } catch (err) {
         showToast(err.message, true);
         if (submitBtn) submitBtn.disabled = false;
@@ -1952,6 +2274,7 @@ function markPaidWithModal(paymentId, amount, rentalId) {
       showToast('Payment settled and recorded.');
       closeModal();
       renderPayments();
+      setTimeout(() => openPaymentReceiptModal(paymentId), 200);
     } catch (err) {
       showToast(err.message, true);
     }
@@ -2125,11 +2448,14 @@ window.deleteUser = function(id) {
 // =====================================================
 // EXPOSE FUNCTIONS FOR INLINE ONCLICK
 // =====================================================
-window.openCarForm      = openCarForm;
-window.openCustomerForm = openCustomerForm;
-window.openRentalForm   = openRentalForm;
-window.openCreateUserForm = openCreateUserForm;
-window.closeModal       = closeModal;
+window.openCarForm              = openCarForm;
+window.openCustomerForm         = openCustomerForm;
+window.openRentalForm           = openRentalForm;
+window.openCreateUserForm       = openCreateUserForm;
+window.closeModal               = closeModal;
+window.openRentalAgreementModal = openRentalAgreementModal;
+window.openPaymentReceiptModal  = openPaymentReceiptModal;
+window.closePrintModal          = closePrintModal;
 
 // =====================================================
 // INIT — check auth, then render

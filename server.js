@@ -509,7 +509,10 @@ app.get('/api/rentals', requireAuth, async (req, res) => {
     const result = await pool.query(`
       SELECT r.*,
              c.full_name AS customer_name,
+             c.phone AS customer_phone,
+             c.license AS customer_license,
              ca.name AS car_name,
+             ca.model AS car_model,
              ca.plate AS car_plate
       FROM rentals r
       LEFT JOIN customers c ON r.customer_id = c.id
@@ -520,6 +523,31 @@ app.get('/api/rentals', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('Get rentals error:', err);
     res.status(500).json({ error: 'Failed to load rentals' });
+  }
+});
+
+app.get('/api/rentals/:id', requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT r.*,
+             c.full_name AS customer_name,
+             c.phone AS customer_phone,
+             c.license AS customer_license,
+             ca.name AS car_name,
+             ca.model AS car_model,
+             ca.plate AS car_plate
+      FROM rentals r
+      LEFT JOIN customers c ON r.customer_id = c.id
+      LEFT JOIN cars ca ON r.car_id = ca.id
+      WHERE r.id = $1
+    `, [req.params.id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Rental not found' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Get rental by id error:', err);
+    res.status(500).json({ error: 'Failed to load rental details' });
   }
 });
 
@@ -698,7 +726,9 @@ app.get('/api/payments', requireAuth, async (req, res) => {
       SELECT p.*,
              c.full_name AS customer_name,
              c.phone AS customer_phone,
+             c.license AS customer_license,
              ca.name AS car_name,
+             ca.model AS car_model,
              ca.plate AS car_plate,
              r.start_date AS rental_start_date,
              r.return_date AS rental_return_date,
@@ -715,6 +745,38 @@ app.get('/api/payments', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('Get payments error:', err);
     res.status(500).json({ error: 'Failed to load payments' });
+  }
+});
+
+/** GET /api/payments/:id — Get single payment by ID */
+app.get('/api/payments/:id', requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT p.*,
+             c.full_name AS customer_name,
+             c.phone AS customer_phone,
+             c.license AS customer_license,
+             ca.name AS car_name,
+             ca.model AS car_model,
+             ca.plate AS car_plate,
+             r.start_date AS rental_start_date,
+             r.return_date AS rental_return_date,
+             r.total_price AS rental_total_price,
+             u.full_name AS recorded_by_name
+      FROM payments p
+      LEFT JOIN rentals r ON p.rental_id = r.id
+      LEFT JOIN customers c ON p.customer_id = c.id
+      LEFT JOIN cars ca ON r.car_id = ca.id
+      LEFT JOIN users u ON p.recorded_by = u.id
+      WHERE p.id = $1
+    `, [req.params.id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Payment not found' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Get payment by id error:', err);
+    res.status(500).json({ error: 'Failed to load payment details' });
   }
 });
 
