@@ -900,7 +900,7 @@ function updateCarsView() {
       <div class="empty-state">
         ${Icons.empty}
         <p>No vehicles in your fleet yet.</p>
-        ${isMgr ? `<button class="btn btn-primary" onclick="openCarForm()" style="margin-top:14px">${Icons.plus} Add First Car</button>` : ''}
+        ${isMgr ? `<button class="btn btn-primary" onclick="openCarForm()" style="margin-top:14px">${Icons.plus}<span>Add First Car</span></button>` : ''}
       </div>
     `;
     return;
@@ -1316,7 +1316,7 @@ async function renderCustomers() {
     pageContainer.innerHTML = `
       <div class="page-header">
         <h2>All Customers</h2>
-        <button class="btn btn-primary" onclick="openCustomerForm()">${Icons.plus} Add Customer</button>
+        <button class="btn btn-primary" onclick="openCustomerForm()">${Icons.plus}<span>Add Customer</span></button>
       </div>
       <div class="table-wrapper">
         <table>
@@ -1450,7 +1450,7 @@ async function renderRentals() {
     pageContainer.innerHTML = `
       <div class="page-header">
         <h2>All Rentals</h2>
-        <button class="btn btn-primary" onclick="openRentalForm()">${Icons.plus} New Rental</button>
+        <button class="btn btn-primary" onclick="openRentalForm()">${Icons.plus}<span>New Rental</span></button>
       </div>
       <div class="table-wrapper">
         <table>
@@ -2033,7 +2033,7 @@ async function renderUsers() {
     pageContainer.innerHTML = `
       <div class="page-header">
         <h2>System Users</h2>
-        <button class="btn btn-primary" onclick="openCreateUserForm()">${Icons.plus} Add Staff Account</button>
+        <button class="btn btn-primary" onclick="openCreateUserForm()">${Icons.plus}<span>Add Staff Account</span></button>
       </div>
       <div class="table-wrapper">
         <table>
