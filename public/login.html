@@ -278,11 +278,6 @@
       </div>
       <p class="login-subtitle" id="formSubtitle">Sign in to your rental management account</p>
 
-      <!-- Tabs -->
-      <div class="auth-tabs">
-        <button type="button" class="auth-tab-btn active" id="tabBtnLogin">Sign In</button>
-        <button type="button" class="auth-tab-btn" id="tabBtnRegister">Register Company</button>
-      </div>
 
       <!-- Messages -->
       <div class="error-msg" id="errorMsg" role="alert">
@@ -344,164 +339,38 @@
 
         <button type="submit" class="btn-login" id="loginBtn">
           <span id="loginBtnText">Sign In</span>
-        </button>
       </form>
-
-      <!-- REGISTER COMPANY FORM (Initially hidden) -->
-      <form id="registerForm" style="display:none" novalidate>
-        <div class="form-group">
-          <label for="regCompanyName">Company Name *</label>
-          <input
-            type="text"
-            id="regCompanyName"
-            placeholder="e.g. Mogadishu Car Rentals"
-            required
-          />
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="regPhone">Phone Number</label>
-            <input
-              type="text"
-              id="regPhone"
-              placeholder="+252 61 0000000"
-            />
-          </div>
-          <div class="form-group">
-            <label for="regAddress">City / Location</label>
-            <input
-              type="text"
-              id="regAddress"
-              placeholder="Mogadishu, Somalia"
-            />
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="regManagerName">Manager Full Name *</label>
-          <input
-            type="text"
-            id="regManagerName"
-            placeholder="e.g. Ahmed Ali"
-            required
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="regEmail">Company / Manager Email *</label>
-          <input
-            type="email"
-            id="regEmail"
-            placeholder="admin@yourcompany.com"
-            autocomplete="email"
-            required
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="regPassword">Manager Password (Min 8 chars) *</label>
-          <div class="input-wrapper">
-            <input
-              type="password"
-              id="regPassword"
-              placeholder="Create strong password"
-              autocomplete="new-password"
-              class="has-toggle"
-              required
-            />
-            <button
-              type="button"
-              class="toggle-pw"
-              id="toggleRegPw"
-              aria-label="Show or hide password"
-            >
-              <svg id="eyeOpenReg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-              </svg>
-              <svg id="eyeClosedReg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
-                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <button type="submit" class="btn-login btn-register" id="regBtn">
-          <span id="regBtnText">Create Company Account</span>
-        </button>
-      </form>
-
     </div>
   </div>
 
   <script>
-    // Tab Switching
-    const tabBtnLogin = document.getElementById('tabBtnLogin');
-    const tabBtnRegister = document.getElementById('tabBtnRegister');
-    const loginForm = document.getElementById('loginForm');
-    const registerForm = document.getElementById('registerForm');
-    const formSubtitle = document.getElementById('formSubtitle');
+    // Password Toggle
+    const pwInput = document.getElementById('loginPassword');
+    const toggleBtn = document.getElementById('toggleLoginPw');
+    const eyeOpen = document.getElementById('eyeOpenLogin');
+    const eyeClosed = document.getElementById('eyeClosedLogin');
 
-    tabBtnLogin.addEventListener('click', () => {
-      tabBtnLogin.classList.add('active');
-      tabBtnRegister.classList.remove('active');
-      loginForm.style.display = 'block';
-      registerForm.style.display = 'none';
-      formSubtitle.textContent = 'Sign in to your rental management account';
-      clearMessages();
+    toggleBtn.addEventListener('click', () => {
+      const isHidden = pwInput.type === 'password';
+      pwInput.type = isHidden ? 'text' : 'password';
+      eyeOpen.style.display = isHidden ? 'none' : '';
+      eyeClosed.style.display = isHidden ? '' : 'none';
     });
-
-    tabBtnRegister.addEventListener('click', () => {
-      tabBtnRegister.classList.add('active');
-      tabBtnLogin.classList.remove('active');
-      loginForm.style.display = 'none';
-      registerForm.style.display = 'block';
-      formSubtitle.textContent = 'Register your rental company and start managing today';
-      clearMessages();
-    });
-
-    // Password Toggles
-    function setupPwToggle(pwId, btnId, eyeOpenId, eyeClosedId) {
-      const input = document.getElementById(pwId);
-      const btn = document.getElementById(btnId);
-      const eyeOpen = document.getElementById(eyeOpenId);
-      const eyeClosed = document.getElementById(eyeClosedId);
-
-      btn.addEventListener('click', () => {
-        const isHidden = input.type === 'password';
-        input.type = isHidden ? 'text' : 'password';
-        eyeOpen.style.display = isHidden ? 'none' : '';
-        eyeClosed.style.display = isHidden ? '' : 'none';
-      });
-    }
-
-    setupPwToggle('loginPassword', 'toggleLoginPw', 'eyeOpenLogin', 'eyeClosedLogin');
-    setupPwToggle('regPassword', 'toggleRegPw', 'eyeOpenReg', 'eyeClosedReg');
 
     // Messages
     const errorMsg = document.getElementById('errorMsg');
     const errorText = document.getElementById('errorText');
-    const successMsg = document.getElementById('successMsg');
-    const successText = document.getElementById('successText');
 
     function showError(msg) {
-      clearMessages();
       errorText.textContent = msg;
       errorMsg.classList.add('visible');
     }
 
-    function showSuccess(msg) {
-      clearMessages();
-      successText.textContent = msg;
-      successMsg.classList.add('visible');
-    }
-
     function clearMessages() {
       errorMsg.classList.remove('visible');
-      successMsg.classList.remove('visible');
     }
 
-    // Check if logged in
+    // Check if already logged in
     (async () => {
       try {
         const res = await fetch('/api/auth/me');
@@ -512,6 +381,7 @@
     })();
 
     // Login Submit
+    const loginForm = document.getElementById('loginForm');
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       clearMessages();
@@ -548,58 +418,6 @@
       } finally {
         btn.disabled = false;
         btnText.textContent = 'Sign In';
-      }
-    });
-
-    // Register Company Submit
-    registerForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      clearMessages();
-
-      const company_name = document.getElementById('regCompanyName').value.trim();
-      const phone = document.getElementById('regPhone').value.trim();
-      const address = document.getElementById('regAddress').value.trim();
-      const manager_name = document.getElementById('regManagerName').value.trim();
-      const email = document.getElementById('regEmail').value.trim();
-      const password = document.getElementById('regPassword').value;
-
-      if (!company_name || !manager_name || !email || !password) {
-        showError('Please fill in all required fields.');
-        return;
-      }
-
-      if (password.length < 8) {
-        showError('Password must be at least 8 characters long.');
-        return;
-      }
-
-      const btn = document.getElementById('regBtn');
-      const btnText = document.getElementById('regBtnText');
-      btn.disabled = true;
-      btnText.textContent = 'Creating Company Account…';
-
-      try {
-        const res = await fetch('/api/auth/register-company', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ company_name, phone, address, manager_name, email, password }),
-        });
-
-        const data = await res.json();
-        if (!res.ok) {
-          showError(data.error || 'Failed to register company.');
-          return;
-        }
-
-        showSuccess('Company registered successfully! Redirecting…');
-        setTimeout(() => {
-          window.location.replace('/');
-        }, 1000);
-      } catch (err) {
-        showError('Connection error. Please try again.');
-      } finally {
-        btn.disabled = false;
-        btnText.textContent = 'Create Company Account';
       }
     });
   </script>
