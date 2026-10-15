@@ -6,16 +6,20 @@ import {
   CheckCircle2,
   Clock,
   Users,
-  DollarSign,
   TrendingUp,
   RefreshCw,
   PlusCircle,
-  AlertCircle,
 } from 'lucide-react';
+import { DashboardData, Rental } from '@/types';
 
-export default function DashboardView({ onNavigate, onOpenNewRental }) {
+interface DashboardViewProps {
+  onNavigate: (page: string) => void;
+  onOpenNewRental: () => void;
+}
+
+export default function DashboardView({ onNavigate, onOpenNewRental }: DashboardViewProps) {
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState({
+  const [data, setData] = useState<DashboardData>({
     totalCars: 0,
     availableCars: 0,
     rentedCars: 0,
@@ -47,7 +51,7 @@ export default function DashboardView({ onNavigate, onOpenNewRental }) {
   const availableCars = data.availableCars || 0;
   const rentedCars = data.rentedCars || 0;
   const totalCustomers = data.totalCustomers || 0;
-  const totalRevenue = parseFloat(data.totalRevenue || 0);
+  const totalRevenue = parseFloat(String(data.totalRevenue || 0));
   const utilization = totalCars > 0 ? Math.round((rentedCars / totalCars) * 100) : 0;
   const recentRentals = Array.isArray(data.recentRentals) ? data.recentRentals : [];
 
@@ -174,14 +178,14 @@ export default function DashboardView({ onNavigate, onOpenNewRental }) {
                 </tr>
               </thead>
               <tbody>
-                {recentRentals.map((r) => (
+                {recentRentals.map((r: Rental) => (
                   <tr key={r.id}>
                     <td>#{r.id}</td>
                     <td style={{ fontWeight: 600 }}>{r.customer_name || 'Customer #' + r.customer_id}</td>
                     <td>{r.car_name ? `${r.car_name} (${r.car_plate || ''})` : `Car #${r.car_id}`}</td>
                     <td>{String(r.start_date).split('T')[0]}</td>
                     <td>{String(r.return_date).split('T')[0]}</td>
-                    <td style={{ fontWeight: 600 }}>${parseFloat(r.total_price || 0).toFixed(2)}</td>
+                    <td style={{ fontWeight: 600 }}>${parseFloat(String(r.total_price || 0)).toFixed(2)}</td>
                     <td>
                       <span className={`badge ${r.status === 'Rented' ? 'badge-warning' : 'badge-success'}`}>
                         {r.status}

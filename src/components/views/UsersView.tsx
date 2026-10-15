@@ -5,14 +5,18 @@ import {
   UserCheck,
   Plus,
   Trash2,
-  Shield,
-  User,
-  Key,
 } from 'lucide-react';
 import Modal from '../Modal';
+import { User } from '@/types';
 
-export default function UsersView({ currentUser, showToast, openConfirm }) {
-  const [users, setUsers] = useState([]);
+interface UsersViewProps {
+  currentUser: User | null;
+  showToast: (msg: string, isError?: boolean) => void;
+  openConfirm: (msg: string, onConfirm: () => void) => void;
+}
+
+export default function UsersView({ currentUser, showToast, openConfirm }: UsersViewProps) {
+  const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Modal
@@ -56,7 +60,7 @@ export default function UsersView({ currentUser, showToast, openConfirm }) {
     setIsModalOpen(true);
   };
 
-  const handleSaveUser = async (e) => {
+  const handleSaveUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.full_name.trim() || !formData.email.trim() || !formData.password.trim()) {
       showToast('Please fill all required user fields.', true);
@@ -77,14 +81,14 @@ export default function UsersView({ currentUser, showToast, openConfirm }) {
       showToast('User created successfully');
       setIsModalOpen(false);
       fetchUsers();
-    } catch (err) {
+    } catch (err: any) {
       showToast(err.message, true);
     } finally {
       setSaving(false);
     }
   };
 
-  const handleChangeRole = async (user, newRole) => {
+  const handleChangeRole = async (user: any, newRole: string) => {
     try {
       const res = await fetch(`/api/users/${user.id}/role`, {
         method: 'PUT',
@@ -96,12 +100,12 @@ export default function UsersView({ currentUser, showToast, openConfirm }) {
 
       showToast(`Role changed to ${newRole}`);
       fetchUsers();
-    } catch (err) {
+    } catch (err: any) {
       showToast(err.message, true);
     }
   };
 
-  const handleDeleteUser = (user) => {
+  const handleDeleteUser = (user: any) => {
     if (user.id === currentUser?.id) {
       showToast('You cannot delete your own account.', true);
       return;
@@ -115,7 +119,7 @@ export default function UsersView({ currentUser, showToast, openConfirm }) {
 
         showToast('User deleted');
         fetchUsers();
-      } catch (err) {
+      } catch (err: any) {
         showToast(err.message, true);
       }
     });

@@ -4,18 +4,24 @@ import React, { useEffect, useState } from 'react';
 import {
   Receipt,
   Plus,
-  DollarSign,
   Fuel,
   Wrench,
   Users,
-  ShieldCheck,
-  Calendar,
 } from 'lucide-react';
 import Modal from '../Modal';
+import { Expense, User } from '@/types';
 
-export default function ExpensesView({ currentUser, showToast }) {
-  const [expenses, setExpenses] = useState([]);
-  const [summary, setSummary] = useState({ total: 0, by_category: {} });
+interface ExpensesViewProps {
+  currentUser: User | null;
+  showToast: (msg: string, isError?: boolean) => void;
+}
+
+export default function ExpensesView({ currentUser, showToast }: ExpensesViewProps) {
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [summary, setSummary] = useState<{ total: number; by_category: Record<string, number> }>({
+    total: 0,
+    by_category: {},
+  });
   const [loading, setLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState('ALL');
 
@@ -63,7 +69,7 @@ export default function ExpensesView({ currentUser, showToast }) {
     setIsModalOpen(true);
   };
 
-  const handleSaveExpense = async (e) => {
+  const handleSaveExpense = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim() || !formData.amount) {
       showToast('Please fill in title and amount.', true);
@@ -84,7 +90,7 @@ export default function ExpensesView({ currentUser, showToast }) {
       showToast('Expense recorded successfully');
       setIsModalOpen(false);
       fetchExpenses();
-    } catch (err) {
+    } catch (err: any) {
       showToast(err.message, true);
     } finally {
       setSaving(false);
@@ -97,10 +103,10 @@ export default function ExpensesView({ currentUser, showToast }) {
     categoryFilter === 'ALL' || e.category === categoryFilter
   );
 
-  const totalExpenseVal = parseFloat(summary.total || 0);
-  const fuelExpenseVal = parseFloat(summary.by_category?.Fuel || 0);
-  const maintenanceVal = parseFloat(summary.by_category?.Maintenance || 0);
-  const salaryVal = parseFloat(summary.by_category?.['Staff Salaries'] || 0);
+  const totalExpenseVal = parseFloat(String(summary.total || 0));
+  const fuelExpenseVal = parseFloat(String(summary.by_category?.Fuel || 0));
+  const maintenanceVal = parseFloat(String(summary.by_category?.Maintenance || 0));
+  const salaryVal = parseFloat(String(summary.by_category?.['Staff Salaries'] || 0));
 
   return (
     <div className="expenses-content">
@@ -216,7 +222,7 @@ export default function ExpensesView({ currentUser, showToast }) {
                       </span>
                     </td>
                     <td style={{ fontWeight: 800, color: '#ef4444' }}>
-                      ${parseFloat(e.amount || 0).toFixed(2)}
+                      ${parseFloat(String(e.amount || 0)).toFixed(2)}
                     </td>
                     <td>{e.payment_method}</td>
                     <td>{String(e.expense_date || '').split('T')[0]}</td>

@@ -3,6 +3,17 @@
 import React from 'react';
 import { X, AlertTriangle } from 'lucide-react';
 
+interface ConfirmModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title?: string;
+  message?: string;
+  confirmText?: string;
+  confirmVariant?: string;
+  loading?: boolean;
+}
+
 export default function ConfirmModal({
   isOpen,
   onClose,
@@ -12,7 +23,7 @@ export default function ConfirmModal({
   confirmText = 'Delete',
   confirmVariant = 'btn-danger',
   loading = false,
-}) {
+}: ConfirmModalProps) {
   if (!isOpen) return null;
 
   return (

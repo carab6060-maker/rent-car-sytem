@@ -11,15 +11,22 @@ import {
   FileCheck,
 } from 'lucide-react';
 import Modal from '../Modal';
+import { Customer, User } from '@/types';
 
-export default function CustomersView({ currentUser, showToast, openConfirm }) {
-  const [customers, setCustomers] = useState([]);
+interface CustomersViewProps {
+  currentUser: User | null;
+  showToast: (msg: string, isError?: boolean) => void;
+  openConfirm: (msg: string, onConfirm: () => void) => void;
+}
+
+export default function CustomersView({ currentUser, showToast, openConfirm }: CustomersViewProps) {
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
   // Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingCustomer, setEditingCustomer] = useState(null);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [formData, setFormData] = useState({
     full_name: '',
     phone: '',
@@ -54,7 +61,7 @@ export default function CustomersView({ currentUser, showToast, openConfirm }) {
     setIsModalOpen(true);
   };
 
-  const handleOpenEdit = (customer) => {
+  const handleOpenEdit = (customer: Customer) => {
     setEditingCustomer(customer);
     setFormData({
       full_name: customer.full_name || '',
@@ -64,7 +71,7 @@ export default function CustomersView({ currentUser, showToast, openConfirm }) {
     setIsModalOpen(true);
   };
 
-  const handleSaveCustomer = async (e) => {
+  const handleSaveCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.full_name.trim() || !formData.phone.trim() || !formData.license.trim()) {
       showToast('Please fill all required customer fields.', true);
@@ -88,14 +95,14 @@ export default function CustomersView({ currentUser, showToast, openConfirm }) {
       showToast(editingCustomer ? 'Customer updated' : 'Customer registered');
       setIsModalOpen(false);
       fetchCustomers();
-    } catch (err) {
+    } catch (err: any) {
       showToast(err.message, true);
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = (customer) => {
+  const handleDelete = (customer: Customer) => {
     openConfirm(`Are you sure you want to delete ${customer.full_name}?`, async () => {
       try {
         const res = await fetch(`/api/customers/${customer.id}`, { method: 'DELETE' });
@@ -103,7 +110,7 @@ export default function CustomersView({ currentUser, showToast, openConfirm }) {
         if (!res.ok) throw new Error(result.error || 'Failed to delete customer');
         showToast('Customer deleted');
         fetchCustomers();
-      } catch (err) {
+      } catch (err: any) {
         showToast(err.message, true);
       }
     });

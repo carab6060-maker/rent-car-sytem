@@ -1,6 +1,6 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
 const SECRET_KEY = new TextEncoder().encode(
   process.env.SESSION_SECRET || 'car-rental-default-session-secret-production-2026'
@@ -11,7 +11,7 @@ const COOKIE_NAME = 'carrent_token';
 /**
  * Signs and sets a JWT cookie
  */
-export async function createSession(userData) {
+export async function createSession(userData: any): Promise<string> {
   const token = await new SignJWT(userData)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
@@ -33,7 +33,7 @@ export async function createSession(userData) {
 /**
  * Reads and verifies current session user
  */
-export async function getSessionUser() {
+export async function getSessionUser(): Promise<any | null> {
   try {
     const cookieStore = cookies();
     const token = cookieStore.get(COOKIE_NAME)?.value;
@@ -49,7 +49,7 @@ export async function getSessionUser() {
 /**
  * Clears session cookie (logout)
  */
-export async function destroySession() {
+export async function destroySession(): Promise<void> {
   const cookieStore = cookies();
   cookieStore.delete(COOKIE_NAME);
 }
@@ -57,7 +57,7 @@ export async function destroySession() {
 /**
  * Returns tenant company_id for the current request
  */
-export function getTenantId(req, sessionUser) {
+export function getTenantId(req: Request | NextRequest, sessionUser: any): number | null {
   if (sessionUser?.role === 'superadmin') {
     const headerCompany = req.headers.get('x-company-id');
     if (headerCompany && !isNaN(parseInt(headerCompany))) {

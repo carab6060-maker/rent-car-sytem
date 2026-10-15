@@ -2,8 +2,16 @@
 
 import React from 'react';
 import { Menu, Building } from 'lucide-react';
+import { User } from '@/types';
 
-const PAGE_TITLES = {
+interface TopbarProps {
+  currentPage: string;
+  currentUser: User | null;
+  companyName?: string;
+  onToggleMobile: () => void;
+}
+
+const PAGE_TITLES: Record<string, string> = {
   dashboard: 'Fleet Dashboard & Analytics',
   cars: 'Vehicle Fleet Management',
   customers: 'Customer Registry',
@@ -19,7 +27,7 @@ export default function Topbar({
   currentUser,
   companyName,
   onToggleMobile,
-}) {
+}: TopbarProps) {
   const currentCompany = companyName || currentUser?.companyName || 'Prime Car Rental';
 
   return (

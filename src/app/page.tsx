@@ -17,23 +17,35 @@ import ExpensesView from '@/components/views/ExpensesView';
 import UsersView from '@/components/views/UsersView';
 import CompaniesView from '@/components/views/CompaniesView';
 
+import { User, Car } from '@/types';
+
+interface ToastItem {
+  id: number;
+  message: string;
+  isError: boolean;
+}
+
 export default function AppMainPage() {
   const router = useRouter();
 
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Multi-tenant companies for SuperAdmin
-  const [companies, setCompanies] = useState([]);
-  const [selectedCompanyId, setSelectedCompanyId] = useState(null);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
 
   // Cross-view state (e.g. "Rent this car" from Cars -> Rentals)
-  const [preselectedCar, setPreselectedCar] = useState(null);
+  const [preselectedCar, setPreselectedCar] = useState<Car | null>(null);
 
   // Print Modal State
-  const [printModal, setPrintModal] = useState({
+  const [printModal, setPrintModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    data: any;
+    type: 'agreement' | 'receipt';
+  }>({
     isOpen: false,
     title: '',
     data: null,
@@ -41,7 +53,12 @@ export default function AppMainPage() {
   });
 
   // Confirm Modal State
-  const [confirmModal, setConfirmModal] = useState({
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    message: string;
+    onConfirm: (() => void) | null;
+    loading: boolean;
+  }>({
     isOpen: false,
     message: '',
     onConfirm: null,
@@ -49,9 +66,9 @@ export default function AppMainPage() {
   });
 
   // Toast Notifications
-  const [toasts, setToasts] = useState([]);
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
 
-  const showToast = useCallback((message, isError = false) => {
+  const showToast = useCallback((message: string, isError = false) => {
     const id = Date.now() + Math.random();
     setToasts((prev) => [...prev, { id, message, isError }]);
     setTimeout(() => {
@@ -70,19 +87,6 @@ export default function AppMainPage() {
       const user = await res.json();
       setCurrentUser(user);
       setSelectedCompanyId(user.companyId);
-
-      // If SuperAdmin, fetch company list
-      if (user.role === 'superadmin' || user.isSuperAdmin) {
-        try {
-          const compRes = await fetch('/api/admin/companies');
-          if (compRes.ok) {
-            const comps = await compRes.json();
-            setCompanies(comps);
-          }
-        } catch (e) {
-          console.error('Failed to load companies for switcher:', e);
-        }
-      }
     } catch (err) {
       router.replace('/login');
     } finally {
@@ -95,25 +99,21 @@ export default function AppMainPage() {
   }, [initAuth]);
 
   // Handle SuperAdmin company switch
-  const handleSwitchCompany = async (companyId) => {
+  const handleSwitchCompany = async (companyId: number) => {
     try {
       const res = await fetch(`/api/admin/switch-company/${companyId}`, { method: 'POST' });
       if (!res.ok) throw new Error('Failed to switch company');
 
-      const found = companies.find((c) => String(c.id) === String(companyId));
       setSelectedCompanyId(companyId);
-      if (found) {
-        setCurrentUser((prev) => ({
-          ...prev,
-          companyId: found.id,
-          companyName: found.name,
-        }));
+      const userRes = await fetch('/api/auth/me');
+      if (userRes.ok) {
+        const updated = await userRes.json();
+        setCurrentUser(updated);
+        showToast(`Switched view to ${updated.companyName || 'Company #' + companyId}`);
       }
-
-      showToast(`Switched view to ${found ? found.name : 'Company #' + companyId}`);
       // Refresh current page
       setCurrentPage((p) => p);
-    } catch (err) {
+    } catch (err: any) {
       showToast(err.message, true);
     }
   };
@@ -127,7 +127,7 @@ export default function AppMainPage() {
   };
 
   // Open confirm modal helper
-  const openConfirm = (message, onConfirm) => {
+  const openConfirm = (message: string, onConfirm: () => void) => {
     setConfirmModal({
       isOpen: true,
       message,
@@ -144,7 +144,7 @@ export default function AppMainPage() {
   };
 
   // Open print modal helper
-  const handleOpenPrint = (data, type = 'agreement') => {
+  const handleOpenPrint = (data: any, type: 'agreement' | 'receipt' = 'agreement') => {
     setPrintModal({
       isOpen: true,
       title: type === 'agreement' ? 'Rental Agreement Contract' : 'Payment Receipt',
@@ -154,7 +154,7 @@ export default function AppMainPage() {
   };
 
   // Rent car shortcut from CarsView
-  const handleRentCar = (car) => {
+  const handleRentCar = (car: Car) => {
     setPreselectedCar(car);
     setCurrentPage('rentals');
   };
@@ -272,7 +272,7 @@ export default function AppMainPage() {
       <ConfirmModal
         isOpen={confirmModal.isOpen}
         onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
-        onConfirm={confirmModal.onConfirm}
+        onConfirm={confirmModal.onConfirm || (() => {})}
         message={confirmModal.message}
         loading={confirmModal.loading}
       />

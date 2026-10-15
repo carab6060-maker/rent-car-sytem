@@ -3,7 +3,23 @@
 import React from 'react';
 import { Printer, X } from 'lucide-react';
 
-export default function PrintModal({ isOpen, onClose, title, data, type = 'agreement', companyName }) {
+interface PrintModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  data: any;
+  type?: 'agreement' | 'receipt';
+  companyName?: string;
+}
+
+export default function PrintModal({
+  isOpen,
+  onClose,
+  title,
+  data,
+  type = 'agreement',
+  companyName,
+}: PrintModalProps) {
   if (!isOpen || !data) return null;
 
   const handlePrint = () => {

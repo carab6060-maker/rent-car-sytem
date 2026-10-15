@@ -3,15 +3,15 @@ import dns from 'dns';
 import { Pool, types } from 'pg';
 
 // Return PostgreSQL DATE as 'YYYY-MM-DD' string without timezone shifting
-types.setTypeParser(1082, (val) => val);
+types.setTypeParser(1082, (val: string) => val);
 
 // Fix Windows IPv4 resolution
 if (process.platform === 'win32') {
-  if (net.setDefaultAutoSelectFamily) {
-    net.setDefaultAutoSelectFamily(false);
+  if ((net as any).setDefaultAutoSelectFamily) {
+    (net as any).setDefaultAutoSelectFamily(false);
   }
   const origLookup = dns.lookup;
-  dns.lookup = function(hostname, options, callback) {
+  dns.lookup = function (hostname: string, options: any, callback: any) {
     if (typeof options === 'function') {
       callback = options;
       options = {};
@@ -20,12 +20,12 @@ if (process.platform === 'win32') {
     }
     options = Object.assign({}, options, { family: 4 });
     return origLookup.call(dns, hostname, options, callback);
-  };
+  } as any;
 }
 
-let _pool = null;
+let _pool: Pool | null = null;
 
-export function getPool() {
+export function getPool(): Pool {
   if (_pool) return _pool;
 
   const rawUrl = process.env.DATABASE_URL || '';
@@ -54,10 +54,10 @@ export function getPool() {
   return _pool;
 }
 
-export const pool = new Proxy({}, {
-  get(target, prop) {
-    const p = getPool();
+export const pool: Pool = new Proxy({} as Pool, {
+  get(target, prop: string | symbol) {
+    const p = getPool() as any;
     const val = p[prop];
     return typeof val === 'function' ? val.bind(p) : val;
-  }
+  },
 });

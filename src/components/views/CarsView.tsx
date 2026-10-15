@@ -2,27 +2,32 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-  Car,
+  Car as CarIcon,
   Plus,
   Search,
   Edit2,
   Trash2,
-  CheckCircle,
-  Clock,
-  DollarSign,
   FileText,
 } from 'lucide-react';
 import Modal from '../Modal';
+import { Car, User } from '@/types';
 
-export default function CarsView({ currentUser, onRentCar, showToast, openConfirm }) {
-  const [cars, setCars] = useState([]);
+interface CarsViewProps {
+  currentUser: User | null;
+  onRentCar: (car: Car) => void;
+  showToast: (msg: string, isError?: boolean) => void;
+  openConfirm: (msg: string, onConfirm: () => void) => void;
+}
+
+export default function CarsView({ currentUser, onRentCar, showToast, openConfirm }: CarsViewProps) {
+  const [cars, setCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingCar, setEditingCar] = useState(null);
+  const [editingCar, setEditingCar] = useState<Car | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     model: '',
@@ -65,19 +70,19 @@ export default function CarsView({ currentUser, onRentCar, showToast, openConfir
     setIsModalOpen(true);
   };
 
-  const handleOpenEdit = (car) => {
+  const handleOpenEdit = (car: Car) => {
     setEditingCar(car);
     setFormData({
       name: car.name || '',
       model: car.model || '',
       plate: car.plate || '',
-      price_per_day: car.price_per_day || '',
+      price_per_day: String(car.price_per_day || ''),
       image_url: car.image_url || '',
     });
     setIsModalOpen(true);
   };
 
-  const handleSaveCar = async (e) => {
+  const handleSaveCar = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.plate.trim() || !formData.price_per_day) {
       showToast('Please fill all required fields.', true);
@@ -101,14 +106,14 @@ export default function CarsView({ currentUser, onRentCar, showToast, openConfir
       showToast(editingCar ? 'Car updated successfully' : 'Car added to fleet');
       setIsModalOpen(false);
       fetchCars();
-    } catch (err) {
+    } catch (err: any) {
       showToast(err.message, true);
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDeleteCar = (car) => {
+  const handleDeleteCar = (car: Car) => {
     if (car.status === 'Rented') {
       showToast('Cannot delete a vehicle that is currently rented out.', true);
       return;
@@ -121,7 +126,7 @@ export default function CarsView({ currentUser, onRentCar, showToast, openConfir
         if (!res.ok) throw new Error(result.error || 'Failed to delete');
         showToast('Vehicle deleted successfully');
         fetchCars();
-      } catch (err) {
+      } catch (err: any) {
         showToast(err.message, true);
       }
     });
@@ -187,7 +192,7 @@ export default function CarsView({ currentUser, onRentCar, showToast, openConfir
         <div style={{ textAlign: 'center', padding: '60px 0', color: '#64748b' }}>Loading fleet vehicles...</div>
       ) : filteredCars.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 20px', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', color: '#94a3b8' }}>
-          <Car size={48} style={{ margin: '0 auto 12px', opacity: 0.5 }} />
+          <CarIcon size={48} style={{ margin: '0 auto 12px', opacity: 0.5 }} />
           <p style={{ fontSize: '1rem', fontWeight: 500 }}>No vehicles found matching criteria.</p>
         </div>
       ) : (
@@ -212,12 +217,12 @@ export default function CarsView({ currentUser, onRentCar, showToast, openConfir
                     src={car.image_url}
                     alt={car.name}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    onError={(e) => {
+                    onError={(e: any) => {
                       e.target.style.display = 'none';
                     }}
                   />
                 ) : (
-                  <Car size={48} color="#94a3b8" />
+                  <CarIcon size={48} color="#94a3b8" />
                 )}
                 <span
                   className={`badge ${car.status === 'Available' ? 'badge-success' : 'badge-warning'}`}
@@ -240,7 +245,7 @@ export default function CarsView({ currentUser, onRentCar, showToast, openConfir
                 </div>
 
                 <div style={{ margin: '14px 0', fontSize: '1.25rem', fontWeight: 800, color: '#2563eb' }}>
-                  ${parseFloat(car.price_per_day || 0).toFixed(2)}
+                  ${parseFloat(String(car.price_per_day || 0)).toFixed(2)}
                   <span style={{ fontSize: '0.8rem', fontWeight: 400, color: '#64748b' }}> / day</span>
                 </div>
 

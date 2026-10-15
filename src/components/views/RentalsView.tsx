@@ -7,12 +7,17 @@ import {
   Search,
   RotateCcw,
   Printer,
-  Calendar,
-  DollarSign,
-  Car,
-  User,
 } from 'lucide-react';
 import Modal from '../Modal';
+import { Rental, Car, Customer, User } from '@/types';
+
+interface RentalsViewProps {
+  currentUser: User | null;
+  preselectedCar: Car | null;
+  onClearPreselectedCar: () => void;
+  onOpenPrint: (data: any, type: 'agreement' | 'receipt') => void;
+  showToast: (msg: string, isError?: boolean) => void;
+}
 
 export default function RentalsView({
   currentUser,
@@ -20,10 +25,10 @@ export default function RentalsView({
   onClearPreselectedCar,
   onOpenPrint,
   showToast,
-}) {
-  const [rentals, setRentals] = useState([]);
-  const [cars, setCars] = useState([]);
-  const [customers, setCustomers] = useState([]);
+}: RentalsViewProps) {
+  const [rentals, setRentals] = useState<Rental[]>([]);
+  const [cars, setCars] = useState<Car[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -40,7 +45,7 @@ export default function RentalsView({
 
   // Return Rental Modal
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
-  const [selectedRental, setSelectedRental] = useState(null);
+  const [selectedRental, setSelectedRental] = useState<Rental | null>(null);
   const [returnForm, setReturnForm] = useState({
     actual_return_date: new Date().toISOString().split('T')[0],
     extra_charges: 0,
@@ -90,20 +95,20 @@ export default function RentalsView({
       setIsNewModalOpen(true);
       if (onClearPreselectedCar) onClearPreselectedCar();
     }
-  }, [preselectedCar]);
+  }, [preselectedCar, onClearPreselectedCar]);
 
   // Calculations for new rental
   const selectedCarObj = cars.find((c) => String(c.id) === String(newRentalForm.car_id));
   const calcDays = () => {
     if (!newRentalForm.start_date || !newRentalForm.return_date) return 0;
-    const diff = new Date(newRentalForm.return_date) - new Date(newRentalForm.start_date);
+    const diff = new Date(newRentalForm.return_date).getTime() - new Date(newRentalForm.start_date).getTime();
     const d = Math.ceil(diff / (1000 * 60 * 60 * 24));
     return d > 0 ? d : 0;
   };
   const totalDays = calcDays();
-  const totalPrice = selectedCarObj ? totalDays * parseFloat(selectedCarObj.price_per_day || 0) : 0;
+  const totalPrice = selectedCarObj ? totalDays * parseFloat(String(selectedCarObj.price_per_day || 0)) : 0;
 
-  const handleCreateRental = async (e) => {
+  const handleCreateRental = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newRentalForm.customer_id || !newRentalForm.car_id) {
       showToast('Please select both a customer and an available car.', true);
@@ -129,14 +134,14 @@ export default function RentalsView({
       setIsNewModalOpen(false);
       fetchRentals();
       fetchAuxData();
-    } catch (err) {
+    } catch (err: any) {
       showToast(err.message, true);
     } finally {
       setCreating(false);
     }
   };
 
-  const handleOpenReturn = (rental) => {
+  const handleOpenReturn = (rental: Rental) => {
     setSelectedRental(rental);
     setReturnForm({
       actual_return_date: new Date().toISOString().split('T')[0],
@@ -145,7 +150,7 @@ export default function RentalsView({
     setIsReturnModalOpen(true);
   };
 
-  const handleConfirmReturn = async (e) => {
+  const handleConfirmReturn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRental) return;
 
@@ -164,7 +169,7 @@ export default function RentalsView({
       setIsReturnModalOpen(false);
       fetchRentals();
       fetchAuxData();
-    } catch (err) {
+    } catch (err: any) {
       showToast(err.message, true);
     } finally {
       setReturning(false);
@@ -278,10 +283,10 @@ export default function RentalsView({
                     </td>
                     <td>{r.total_days} days</td>
                     <td style={{ fontWeight: 700, color: '#0f172a' }}>
-                      ${(parseFloat(r.total_price || 0) + parseFloat(r.extra_charges || 0)).toFixed(2)}
+                      ${(parseFloat(String(r.total_price || 0)) + parseFloat(String(r.extra_charges || 0))).toFixed(2)}
                       {r.extra_charges ? (
                         <span style={{ display: 'block', fontSize: '0.75rem', color: '#ef4444' }}>
-                          +${parseFloat(r.extra_charges).toFixed(2)} fees
+                          +${parseFloat(String(r.extra_charges)).toFixed(2)} fees
                         </span>
                       ) : null}
                     </td>
@@ -358,7 +363,7 @@ export default function RentalsView({
               <option value="">-- Choose Vehicle --</option>
               {availableCars.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name} {c.model || ''} - {c.plate} (${parseFloat(c.price_per_day).toFixed(2)}/day)
+                  {c.name} {c.model || ''} - {c.plate} (${parseFloat(String(c.price_per_day)).toFixed(2)}/day)
                 </option>
               ))}
             </select>
@@ -396,7 +401,7 @@ export default function RentalsView({
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.88rem', color: '#64748b' }}>
               <span>Rate Per Day:</span>
-              <strong style={{ color: '#0f172a' }}>${selectedCarObj ? parseFloat(selectedCarObj.price_per_day).toFixed(2) : '0.00'}</strong>
+              <strong style={{ color: '#0f172a' }}>${selectedCarObj ? parseFloat(String(selectedCarObj.price_per_day)).toFixed(2) : '0.00'}</strong>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid #cbd5e1', fontSize: '1.05rem', fontWeight: 700, color: '#2563eb' }}>
               <span>Total Contract Price:</span>
@@ -427,7 +432,7 @@ export default function RentalsView({
             <div style={{ marginBottom: '16px', padding: '12px', background: '#f8fafc', borderRadius: '8px', fontSize: '0.9rem' }}>
               <div><strong>Car:</strong> {selectedRental.car_name} ({selectedRental.car_plate})</div>
               <div><strong>Customer:</strong> {selectedRental.customer_name}</div>
-              <div><strong>Contract Total:</strong> ${parseFloat(selectedRental.total_price || 0).toFixed(2)}</div>
+              <div><strong>Contract Total:</strong> ${parseFloat(String(selectedRental.total_price || 0)).toFixed(2)}</div>
             </div>
           )}
 

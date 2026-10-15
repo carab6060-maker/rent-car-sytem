@@ -23,7 +23,7 @@ export default function LoginPage() {
       .catch(() => {});
   }, [router]);
 
-  async function handleLogin(e) {
+  async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setError('');
 

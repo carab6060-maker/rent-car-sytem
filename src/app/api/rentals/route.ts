@@ -62,7 +62,7 @@ export async function POST(req) {
 
     const startD = new Date(start_date);
     const endD = new Date(return_date);
-    const totalDays = Math.ceil((endD - startD) / (1000 * 60 * 60 * 24));
+    const totalDays = Math.ceil((endD.getTime() - startD.getTime()) / (1000 * 60 * 60 * 24));
     if (totalDays <= 0) {
       await client.query('ROLLBACK');
       return NextResponse.json({ error: 'Return date must be after start date' }, { status: 400 });

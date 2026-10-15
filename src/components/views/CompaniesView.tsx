@@ -4,22 +4,26 @@ import React, { useEffect, useState } from 'react';
 import {
   Building2,
   Plus,
-  Users,
-  Car,
-  FileText,
   ExternalLink,
-  ShieldCheck,
   CheckCircle2,
 } from 'lucide-react';
 import Modal from '../Modal';
+import { Company, User } from '@/types';
+
+interface CompaniesViewProps {
+  currentUser: User | null;
+  activeCompanyId: number | null;
+  onSwitchCompany: (id: number) => void;
+  showToast: (msg: string, isError?: boolean) => void;
+}
 
 export default function CompaniesView({
   currentUser,
   activeCompanyId,
   onSwitchCompany,
   showToast,
-}) {
-  const [companies, setCompanies] = useState([]);
+}: CompaniesViewProps) {
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Add Company Modal
@@ -55,7 +59,7 @@ export default function CompaniesView({
     fetchCompanies();
   }, []);
 
-  const handleNameChange = (name) => {
+  const handleNameChange = (name: string) => {
     const slug = name
       .toLowerCase()
       .trim()
@@ -68,7 +72,7 @@ export default function CompaniesView({
     }));
   };
 
-  const handleCreateCompany = async (e) => {
+  const handleCreateCompany = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.slug.trim()) {
       showToast('Company name and slug are required.', true);
@@ -99,7 +103,7 @@ export default function CompaniesView({
         admin_password: '',
       });
       fetchCompanies();
-    } catch (err) {
+    } catch (err: any) {
       showToast(err.message, true);
     } finally {
       setSaving(false);

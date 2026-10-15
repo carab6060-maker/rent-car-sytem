@@ -6,15 +6,19 @@ import {
   Plus,
   Search,
   Printer,
-  DollarSign,
-  Calendar,
-  User,
 } from 'lucide-react';
 import Modal from '../Modal';
+import { Payment, Rental, User } from '@/types';
 
-export default function PaymentsView({ currentUser, onOpenPrint, showToast }) {
-  const [payments, setPayments] = useState([]);
-  const [unpaidRentals, setUnpaidRentals] = useState([]);
+interface PaymentsViewProps {
+  currentUser: User | null;
+  onOpenPrint: (data: any, type: 'agreement' | 'receipt') => void;
+  showToast: (msg: string, isError?: boolean) => void;
+}
+
+export default function PaymentsView({ currentUser, onOpenPrint, showToast }: PaymentsViewProps) {
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [unpaidRentals, setUnpaidRentals] = useState<Rental[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
@@ -75,16 +79,16 @@ export default function PaymentsView({ currentUser, onOpenPrint, showToast }) {
     setIsModalOpen(true);
   };
 
-  const handleSelectRental = (rentalId) => {
+  const handleSelectRental = (rentalId: string) => {
     const r = unpaidRentals.find((item) => String(item.id) === String(rentalId));
     setFormData((prev) => ({
       ...prev,
       rental_id: rentalId,
-      amount: r ? parseFloat(r.balance_due || r.total_price || 0).toFixed(2) : prev.amount,
+      amount: r ? parseFloat(String(r.balance_due || r.total_price || 0)).toFixed(2) : prev.amount,
     }));
   };
 
-  const handleSavePayment = async (e) => {
+  const handleSavePayment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.rental_id || !formData.amount) {
       showToast('Please select a contract and enter the amount.', true);
@@ -106,7 +110,7 @@ export default function PaymentsView({ currentUser, onOpenPrint, showToast }) {
       setIsModalOpen(false);
       fetchPayments();
       fetchUnpaidRentals();
-    } catch (err) {
+    } catch (err: any) {
       showToast(err.message, true);
     } finally {
       setSaving(false);
@@ -176,7 +180,7 @@ export default function PaymentsView({ currentUser, onOpenPrint, showToast }) {
                     <td style={{ fontWeight: 600 }}>{p.customer_name || 'Customer'}</td>
                     <td>{p.car_name ? `${p.car_name} (${p.car_plate || ''})` : `Rental #${p.rental_id}`}</td>
                     <td style={{ fontWeight: 800, color: '#16a34a', fontSize: '1rem' }}>
-                      ${parseFloat(p.amount || 0).toFixed(2)}
+                      ${parseFloat(String(p.amount || 0)).toFixed(2)}
                     </td>
                     <td>
                       <span className="badge badge-info" style={{ fontWeight: 500 }}>
@@ -223,7 +227,7 @@ export default function PaymentsView({ currentUser, onOpenPrint, showToast }) {
               <option value="">-- Select Rental Contract --</option>
               {unpaidRentals.map((r) => (
                 <option key={r.id} value={r.id}>
-                  Contract #{r.id} - {r.customer_name} ({r.car_name} {r.car_plate}) • Due: ${parseFloat(r.balance_due || r.total_price || 0).toFixed(2)}
+                  Contract #{r.id} - {r.customer_name} ({r.car_name} {r.car_plate}) • Due: ${parseFloat(String(r.balance_due || r.total_price || 0)).toFixed(2)}
                 </option>
               ))}
             </select>

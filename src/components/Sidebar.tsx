@@ -12,6 +12,17 @@ import {
   Building2,
   LogOut,
 } from 'lucide-react';
+import { User } from '@/types';
+
+interface SidebarProps {
+  currentPage: string;
+  onNavigate: (page: string) => void;
+  currentUser: User | null;
+  companyName?: string;
+  onLogout: () => void;
+  isOpen: boolean;
+  onCloseMobile?: () => void;
+}
 
 export default function Sidebar({
   currentPage,
@@ -21,7 +32,7 @@ export default function Sidebar({
   onLogout,
   isOpen,
   onCloseMobile,
-}) {
+}: SidebarProps) {
   const isManager = currentUser && (currentUser.role === 'manager' || currentUser.role === 'superadmin');
   const isSuperAdmin = currentUser && (currentUser.role === 'superadmin' || currentUser.isSuperAdmin);
 
