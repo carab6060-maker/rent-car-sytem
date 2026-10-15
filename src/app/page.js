@@ -195,9 +195,7 @@ export default function AppMainPage() {
         <Topbar
           currentPage={currentPage}
           currentUser={currentUser}
-          companies={companies}
-          selectedCompanyId={selectedCompanyId}
-          onSwitchCompany={handleSwitchCompany}
+          companyName={currentUser?.companyName}
           onToggleMobile={() => setMobileMenuOpen(!mobileMenuOpen)}
         />
 

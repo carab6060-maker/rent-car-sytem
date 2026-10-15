@@ -88,10 +88,10 @@
       </button>
       <h1 class="page-title" id="pageTitle">Dashboard</h1>
       <div class="topbar-user">
-        <!-- SuperAdmin company switcher selector (only visible for superadmin) -->
-        <div class="company-switch-wrapper" id="companySwitchWrapper" style="display:none">
-          <label for="companySelect" class="switch-label">Company:</label>
-          <select id="companySelect" class="company-select"></select>
+        <!-- Active Company Badge (single company, no dropdown) -->
+        <div class="company-active-badge" id="companyBadgeWrapper">
+          <span class="badge-label">Company:</span>
+          <span class="badge-company-name" id="topbarCompanyName">Loading...</span>
         </div>
         <span class="topbar-role-badge" id="topbarRoleBadge"></span>
         <span class="topbar-user-name" id="topbarUserName"></span>

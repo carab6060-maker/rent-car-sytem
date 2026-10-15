@@ -2430,4 +2430,25 @@ tbody tr:last-child td {
   border-top: 1px solid var(--color-border);
 }
 
+.company-active-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f1f5f9;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  border: 1px solid #e2e8f0;
+}
+
+.company-active-badge .badge-label {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.company-active-badge .badge-company-name {
+  color: #0f172a;
+  font-weight: 700;
+}
+
 

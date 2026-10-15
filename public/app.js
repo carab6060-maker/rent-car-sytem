@@ -39,6 +39,8 @@ function applyUserUI() {
   if (roleEl)   roleEl.textContent   = currentUser.role;
   if (avatarEl) avatarEl.textContent = currentUser.fullName.charAt(0);
   if (companyEl) companyEl.textContent = currentUser.companyName || 'Prime Car Rental';
+  const topbarCompanyEl = document.getElementById('topbarCompanyName');
+  if (topbarCompanyEl) topbarCompanyEl.textContent = currentUser.companyName || 'Prime Car Rental';
 
   // Topbar
   const topbarName = document.getElementById('topbarUserName');
@@ -57,45 +59,13 @@ function applyUserUI() {
   // Show "Companies" nav item for superadmin
   if (currentUser.role === 'superadmin' || currentUser.isSuperAdmin) {
     document.querySelectorAll('.nav-item-superadmin').forEach(el => el.style.display = '');
-    setupCompanySwitcher();
   }
 }
 
-async function setupCompanySwitcher() {
-  const switchWrapper = document.getElementById('companySwitchWrapper');
-  const select = document.getElementById('companySelect');
-  if (!switchWrapper || !select) return;
-
-  try {
-    const companies = await API.get('/api/admin/companies');
-    if (!companies || companies.length === 0) return;
-
-    switchWrapper.style.display = 'flex';
-    select.innerHTML = companies.map(c => `
-      <option value="${c.id}" ${c.id === currentUser.companyId ? 'selected' : ''}>
-        ${esc(c.name)} (${c.status})
-      </option>
-    `).join('');
-
-    select.onchange = async () => {
-      const selectedId = select.value;
-      try {
-        await API.post(`/api/admin/switch-company/${selectedId}`);
-        const found = companies.find(c => String(c.id) === String(selectedId));
-        if (found) {
-          currentUser.companyId = found.id;
-          currentUser.companyName = found.name;
-          const companyEl = document.getElementById('brandCompany');
-          if (companyEl) companyEl.textContent = found.name;
-        }
-        showToast('Switched company view');
-        navigateTo(currentPage);
-      } catch (err) {
-        showToast(err.message, true);
-      }
-    };
-  } catch (err) {
-    console.error('Setup switcher error:', err);
+function setupCompanySwitcher() {
+  const topbarCompany = document.getElementById('topbarCompanyName');
+  if (topbarCompany && currentUser) {
+    topbarCompany.textContent = currentUser.companyName || 'Prime Car Rental';
   }
 }
 

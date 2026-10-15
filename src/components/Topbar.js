@@ -17,12 +17,10 @@ const PAGE_TITLES = {
 export default function Topbar({
   currentPage,
   currentUser,
-  companies,
-  selectedCompanyId,
-  onSwitchCompany,
+  companyName,
   onToggleMobile,
 }) {
-  const isSuperAdmin = currentUser && (currentUser.role === 'superadmin' || currentUser.isSuperAdmin);
+  const currentCompany = companyName || currentUser?.companyName || 'Prime Car Rental';
 
   return (
     <header className="topbar">
@@ -39,26 +37,24 @@ export default function Topbar({
       </div>
 
       <div className="topbar-user">
-        {isSuperAdmin && companies && companies.length > 0 && (
-          <div className="company-switch-wrapper">
-            <Building size={16} className="switch-icon" />
-            <label htmlFor="companySelect" className="switch-label">
-              Company:
-            </label>
-            <select
-              id="companySelect"
-              className="company-select"
-              value={selectedCompanyId || ''}
-              onChange={(e) => onSwitchCompany(e.target.value)}
-            >
-              {companies.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name} {c.status ? `(${c.status})` : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+        {/* Active Company Badge (Clean static display, no dropdown options) */}
+        <div
+          className="company-active-badge"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            background: '#f1f5f9',
+            padding: '6px 14px',
+            borderRadius: '8px',
+            fontSize: '0.85rem',
+            border: '1px solid #e2e8f0',
+          }}
+        >
+          <Building size={15} style={{ color: '#2563eb' }} />
+          <span style={{ color: '#64748b', fontWeight: 500 }}>Company:</span>
+          <span style={{ color: '#0f172a', fontWeight: 700 }}>{currentCompany}</span>
+        </div>
 
         <span className={`topbar-role-badge role-${currentUser?.role || 'staff'}`}>
           {currentUser?.role || 'staff'}
