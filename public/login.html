@@ -3,14 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Login — Car Rental Management System" />
-  <title>Login — CarRent</title>
+  <meta name="description" content="Login & Company Registration — Car Rental SaaS Platform" />
+  <title>Login / Register — CarRent SaaS</title>
   <link rel="icon" type="image/png" href="/images/logo.png?v=2" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
-    /* ===========================
-       Design Tokens
-       =========================== */
     :root {
       --color-primary: #358dd5;
       --color-primary-hover: #2677b8;
@@ -23,6 +20,8 @@
       --color-border: #e2e8f0;
       --color-danger: #c0392b;
       --color-danger-bg: #fbeaea;
+      --color-success: #1e7e34;
+      --color-success-bg: #e8f8f0;
       --radius: 8px;
       --shadow-md: 0 10px 30px rgba(32, 34, 93, 0.08);
       --transition: 0.2s ease;
@@ -40,35 +39,29 @@
       font-size: 15px;
     }
 
-    /* ===========================
-       Layout
-       =========================== */
     .login-wrapper {
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 24px 16px;
+      padding: 30px 16px;
     }
 
     .login-card {
       background: var(--color-white);
-      border-radius: 12px;
+      border-radius: 14px;
       box-shadow: var(--shadow-md);
       border: 1px solid #eef2f6;
       width: 100%;
-      max-width: 420px;
-      padding: 40px 36px;
+      max-width: 460px;
+      padding: 36px 32px;
     }
 
-    /* ===========================
-       Brand header
-       =========================== */
     .login-brand {
       display: flex;
       align-items: center;
       gap: 12px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
 
     .login-brand-logo {
@@ -88,14 +81,41 @@
     .login-subtitle {
       font-size: 0.88rem;
       color: var(--color-text-secondary);
-      margin-bottom: 30px;
+      margin-bottom: 22px;
     }
 
-    /* ===========================
-       Form elements
-       =========================== */
+    /* Auth Tabs */
+    .auth-tabs {
+      display: flex;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 10px;
+      margin-bottom: 24px;
+      gap: 4px;
+    }
+
+    .auth-tab-btn {
+      flex: 1;
+      padding: 9px 12px;
+      border: none;
+      background: transparent;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all var(--transition);
+      text-align: center;
+    }
+
+    .auth-tab-btn.active {
+      background: var(--color-white);
+      color: var(--color-navy);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+
     .form-group {
-      margin-bottom: 18px;
+      margin-bottom: 16px;
     }
 
     .form-group label {
@@ -110,7 +130,7 @@
       position: relative;
     }
 
-    .form-group input {
+    .form-group input, .form-group textarea {
       width: 100%;
       padding: 10px 14px;
       border: 1px solid var(--color-border);
@@ -122,7 +142,7 @@
       transition: border-color var(--transition), box-shadow var(--transition);
     }
 
-    .form-group input:focus {
+    .form-group input:focus, .form-group textarea:focus {
       outline: none;
       border-color: var(--color-primary);
       box-shadow: 0 0 0 3px rgba(53, 141, 213, 0.16);
@@ -138,77 +158,43 @@
       top: 0;
       bottom: 0;
       width: 42px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       background: none;
       border: none;
       cursor: pointer;
-      color: var(--color-text-secondary);
-      transition: color var(--transition);
-    }
-
-    .toggle-pw:hover { color: var(--color-text); }
-    .toggle-pw svg { width: 18px; height: 18px; }
-
-    /* ===========================
-       Error message
-       =========================== */
-    .error-msg {
-      display: none;
-      align-items: center;
-      gap: 8px;
-      background: var(--color-danger-bg);
-      color: var(--color-danger);
-      border: 1px solid rgba(192, 57, 43, 0.2);
-      border-radius: var(--radius);
-      padding: 10px 14px;
-      font-size: 0.85rem;
-      font-weight: 500;
-      margin-bottom: 18px;
-      line-height: 1.4;
-    }
-
-    .error-msg.visible {
       display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-text-secondary);
+      border-top-right-radius: var(--radius);
+      border-bottom-right-radius: var(--radius);
     }
 
-    .error-msg svg {
-      width: 16px;
-      height: 16px;
-      flex-shrink: 0;
+    .toggle-pw svg {
+      width: 18px;
+      height: 18px;
     }
 
-    /* ===========================
-       Submit button
-       =========================== */
     .btn-login {
       width: 100%;
-      padding: 12px 18px;
-      background: var(--color-primary);
-      color: #fff;
+      padding: 12px;
+      background-color: var(--color-navy);
+      color: var(--color-white);
       border: none;
       border-radius: var(--radius);
-      font-size: 0.95rem;
+      font-size: 0.96rem;
       font-weight: 600;
       font-family: inherit;
       cursor: pointer;
-      transition: background var(--transition), transform 0.1s, box-shadow var(--transition);
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      margin-top: 6px;
-      box-shadow: 0 2px 8px rgba(53, 141, 213, 0.25);
+      transition: background-color var(--transition), transform var(--transition);
+      margin-top: 8px;
     }
 
     .btn-login:hover:not(:disabled) {
-      background: var(--color-primary-hover);
-      box-shadow: 0 4px 14px rgba(53, 141, 213, 0.35);
-    }
-
-    .btn-login:active:not(:disabled) {
-      transform: scale(0.98);
+      background-color: var(--color-navy-dark);
     }
 
     .btn-login:disabled {
@@ -216,20 +202,67 @@
       cursor: not-allowed;
     }
 
-    /* ===========================
-       Spinner
-       =========================== */
+    .btn-register {
+      background-color: var(--color-primary);
+    }
+
+    .btn-register:hover:not(:disabled) {
+      background-color: var(--color-primary-hover);
+    }
+
+    .error-msg, .success-msg {
+      display: none;
+      padding: 11px 14px;
+      border-radius: var(--radius);
+      font-size: 0.86rem;
+      margin-bottom: 18px;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .error-msg.visible {
+      display: flex;
+      background-color: var(--color-danger-bg);
+      border: 1px solid #f5c6cb;
+      color: var(--color-danger);
+    }
+
+    .success-msg.visible {
+      display: flex;
+      background-color: var(--color-success-bg);
+      border: 1px solid #c3e6cb;
+      color: var(--color-success);
+    }
+
+    .error-msg svg, .success-msg svg {
+      width: 17px;
+      height: 17px;
+      flex-shrink: 0;
+    }
+
     .spinner {
-      width: 18px;
-      height: 18px;
-      border: 2px solid rgba(255,255,255,0.4);
-      border-top-color: #fff;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      border-top-color: #ffffff;
       border-radius: 50%;
-      animation: spin 0.65s linear infinite;
+      animation: spin 0.7s linear infinite;
     }
 
     @keyframes spin {
       to { transform: rotate(360deg); }
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 480px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -240,12 +273,18 @@
 
       <!-- Brand -->
       <div class="login-brand">
-        <img src="/images/logo.png?v=2" alt="Company Logo" class="login-brand-logo" />
-        <span class="login-brand-name">CarRent</span>
+        <img src="/images/logo.png?v=2" alt="CarRent Logo" class="login-brand-logo" />
+        <span class="login-brand-name">CarRent SaaS</span>
       </div>
-      <p class="login-subtitle">Car Rental Management System — Sign in to continue</p>
+      <p class="login-subtitle" id="formSubtitle">Sign in to your rental management account</p>
 
-      <!-- Error message -->
+      <!-- Tabs -->
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab-btn active" id="tabBtnLogin">Sign In</button>
+        <button type="button" class="auth-tab-btn" id="tabBtnRegister">Register Company</button>
+      </div>
+
+      <!-- Messages -->
       <div class="error-msg" id="errorMsg" role="alert">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
@@ -254,7 +293,14 @@
         <span id="errorText"></span>
       </div>
 
-      <!-- Login form -->
+      <div class="success-msg" id="successMsg" role="status">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        <span id="successText"></span>
+      </div>
+
+      <!-- LOGIN FORM -->
       <form id="loginForm" novalidate>
         <div class="form-group">
           <label for="loginEmail">Email Address</label>
@@ -262,7 +308,7 @@
             type="email"
             id="loginEmail"
             name="email"
-            placeholder="you@example.com"
+            placeholder="you@company.com"
             autocomplete="email"
             required
           />
@@ -283,27 +329,105 @@
             <button
               type="button"
               class="toggle-pw"
-              id="togglePw"
+              id="toggleLoginPw"
               aria-label="Show or hide password"
-              title="Show / hide password"
             >
-              <!-- Eye icon (shown when password is hidden) -->
-              <svg id="eyeOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle cx="12" cy="12" r="3"/>
+              <svg id="eyeOpenLogin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
               </svg>
-              <!-- Eye-off icon (shown when password is visible) -->
-              <svg id="eyeClosed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
-                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-                <line x1="1" y1="1" x2="23" y2="23"/>
+              <svg id="eyeClosedLogin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>
               </svg>
             </button>
           </div>
         </div>
 
         <button type="submit" class="btn-login" id="loginBtn">
-          <span id="btnText">Sign In</span>
+          <span id="loginBtnText">Sign In</span>
+        </button>
+      </form>
+
+      <!-- REGISTER COMPANY FORM (Initially hidden) -->
+      <form id="registerForm" style="display:none" novalidate>
+        <div class="form-group">
+          <label for="regCompanyName">Company Name *</label>
+          <input
+            type="text"
+            id="regCompanyName"
+            placeholder="e.g. Mogadishu Car Rentals"
+            required
+          />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="regPhone">Phone Number</label>
+            <input
+              type="text"
+              id="regPhone"
+              placeholder="+252 61 0000000"
+            />
+          </div>
+          <div class="form-group">
+            <label for="regAddress">City / Location</label>
+            <input
+              type="text"
+              id="regAddress"
+              placeholder="Mogadishu, Somalia"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="regManagerName">Manager Full Name *</label>
+          <input
+            type="text"
+            id="regManagerName"
+            placeholder="e.g. Ahmed Ali"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="regEmail">Company / Manager Email *</label>
+          <input
+            type="email"
+            id="regEmail"
+            placeholder="admin@yourcompany.com"
+            autocomplete="email"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="regPassword">Manager Password (Min 8 chars) *</label>
+          <div class="input-wrapper">
+            <input
+              type="password"
+              id="regPassword"
+              placeholder="Create strong password"
+              autocomplete="new-password"
+              class="has-toggle"
+              required
+            />
+            <button
+              type="button"
+              class="toggle-pw"
+              id="toggleRegPw"
+              aria-label="Show or hide password"
+            >
+              <svg id="eyeOpenReg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+              <svg id="eyeClosedReg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-login btn-register" id="regBtn">
+          <span id="regBtnText">Create Company Account</span>
         </button>
       </form>
 
@@ -311,79 +435,88 @@
   </div>
 
   <script>
-    /* ===========================
-       Show / hide password toggle
-       =========================== */
-    const pwInput   = document.getElementById('loginPassword');
-    const toggleBtn = document.getElementById('togglePw');
-    const eyeOpen   = document.getElementById('eyeOpen');
-    const eyeClosed = document.getElementById('eyeClosed');
+    // Tab Switching
+    const tabBtnLogin = document.getElementById('tabBtnLogin');
+    const tabBtnRegister = document.getElementById('tabBtnRegister');
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const formSubtitle = document.getElementById('formSubtitle');
 
-    toggleBtn.addEventListener('click', () => {
-      const isHidden = pwInput.type === 'password';
-      pwInput.type     = isHidden ? 'text' : 'password';
-      eyeOpen.style.display   = isHidden ? 'none'  : '';
-      eyeClosed.style.display = isHidden ? ''      : 'none';
+    tabBtnLogin.addEventListener('click', () => {
+      tabBtnLogin.classList.add('active');
+      tabBtnRegister.classList.remove('active');
+      loginForm.style.display = 'block';
+      registerForm.style.display = 'none';
+      formSubtitle.textContent = 'Sign in to your rental management account';
+      clearMessages();
     });
 
-    /* ===========================
-       Error display
-       =========================== */
-    const errorMsg  = document.getElementById('errorMsg');
+    tabBtnRegister.addEventListener('click', () => {
+      tabBtnRegister.classList.add('active');
+      tabBtnLogin.classList.remove('active');
+      loginForm.style.display = 'none';
+      registerForm.style.display = 'block';
+      formSubtitle.textContent = 'Register your rental company and start managing today';
+      clearMessages();
+    });
+
+    // Password Toggles
+    function setupPwToggle(pwId, btnId, eyeOpenId, eyeClosedId) {
+      const input = document.getElementById(pwId);
+      const btn = document.getElementById(btnId);
+      const eyeOpen = document.getElementById(eyeOpenId);
+      const eyeClosed = document.getElementById(eyeClosedId);
+
+      btn.addEventListener('click', () => {
+        const isHidden = input.type === 'password';
+        input.type = isHidden ? 'text' : 'password';
+        eyeOpen.style.display = isHidden ? 'none' : '';
+        eyeClosed.style.display = isHidden ? '' : 'none';
+      });
+    }
+
+    setupPwToggle('loginPassword', 'toggleLoginPw', 'eyeOpenLogin', 'eyeClosedLogin');
+    setupPwToggle('regPassword', 'toggleRegPw', 'eyeOpenReg', 'eyeClosedReg');
+
+    // Messages
+    const errorMsg = document.getElementById('errorMsg');
     const errorText = document.getElementById('errorText');
+    const successMsg = document.getElementById('successMsg');
+    const successText = document.getElementById('successText');
 
     function showError(msg) {
+      clearMessages();
       errorText.textContent = msg;
       errorMsg.classList.add('visible');
     }
 
-    function clearError() {
+    function showSuccess(msg) {
+      clearMessages();
+      successText.textContent = msg;
+      successMsg.classList.add('visible');
+    }
+
+    function clearMessages() {
       errorMsg.classList.remove('visible');
+      successMsg.classList.remove('visible');
     }
 
-    /* ===========================
-       Loading state
-       =========================== */
-    const loginBtn = document.getElementById('loginBtn');
-    const btnText  = document.getElementById('btnText');
-
-    function setLoading(loading) {
-      loginBtn.disabled = loading;
-      if (loading) {
-        btnText.textContent = 'Signing in…';
-        const spinner = document.createElement('span');
-        spinner.className = 'spinner';
-        spinner.id = 'loginSpinner';
-        loginBtn.appendChild(spinner);
-      } else {
-        btnText.textContent = 'Sign In';
-        const s = document.getElementById('loginSpinner');
-        if (s) s.remove();
-      }
-    }
-
-    /* ===========================
-       Check if already logged in
-       =========================== */
+    // Check if logged in
     (async () => {
       try {
         const res = await fetch('/api/auth/me');
         if (res.ok) {
           window.location.replace('/');
         }
-      } catch (_) {
-        // not logged in — stay on page
-      }
+      } catch (_) {}
     })();
 
-    /* ===========================
-       Form submit
-       =========================== */
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    // Login Submit
+    loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      clearError();
+      clearMessages();
 
-      const email    = document.getElementById('loginEmail').value.trim();
+      const email = document.getElementById('loginEmail').value.trim();
       const password = document.getElementById('loginPassword').value;
 
       if (!email || !password) {
@@ -391,7 +524,10 @@
         return;
       }
 
-      setLoading(true);
+      const btn = document.getElementById('loginBtn');
+      const btnText = document.getElementById('loginBtnText');
+      btn.disabled = true;
+      btnText.textContent = 'Signing in…';
 
       try {
         const res = await fetch('/api/auth/login', {
@@ -401,21 +537,71 @@
         });
 
         const data = await res.json();
-
         if (!res.ok) {
-          showError(data.error || 'Login failed. Please try again.');
+          showError(data.error || 'Login failed.');
           return;
         }
 
-        // Redirect to dashboard
         window.location.replace('/');
       } catch (err) {
-        showError('Unable to connect to the server. Please try again.');
+        showError('Unable to connect to server.');
       } finally {
-        setLoading(false);
+        btn.disabled = false;
+        btnText.textContent = 'Sign In';
+      }
+    });
+
+    // Register Company Submit
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearMessages();
+
+      const company_name = document.getElementById('regCompanyName').value.trim();
+      const phone = document.getElementById('regPhone').value.trim();
+      const address = document.getElementById('regAddress').value.trim();
+      const manager_name = document.getElementById('regManagerName').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
+      const password = document.getElementById('regPassword').value;
+
+      if (!company_name || !manager_name || !email || !password) {
+        showError('Please fill in all required fields.');
+        return;
+      }
+
+      if (password.length < 8) {
+        showError('Password must be at least 8 characters long.');
+        return;
+      }
+
+      const btn = document.getElementById('regBtn');
+      const btnText = document.getElementById('regBtnText');
+      btn.disabled = true;
+      btnText.textContent = 'Creating Company Account…';
+
+      try {
+        const res = await fetch('/api/auth/register-company', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ company_name, phone, address, manager_name, email, password }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          showError(data.error || 'Failed to register company.');
+          return;
+        }
+
+        showSuccess('Company registered successfully! Redirecting…');
+        setTimeout(() => {
+          window.location.replace('/');
+        }, 1000);
+      } catch (err) {
+        showError('Connection error. Please try again.');
+      } finally {
+        btn.disabled = false;
+        btnText.textContent = 'Create Company Account';
       }
     });
   </script>
-
 </body>
 </html>

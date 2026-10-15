@@ -33,10 +33,12 @@ function applyUserUI() {
   const nameEl   = document.getElementById('sidebarUserName');
   const roleEl   = document.getElementById('sidebarUserRole');
   const avatarEl = document.getElementById('sidebarAvatar');
+  const companyEl = document.getElementById('brandCompany');
 
   if (nameEl)   nameEl.textContent   = currentUser.fullName;
   if (roleEl)   roleEl.textContent   = currentUser.role;
   if (avatarEl) avatarEl.textContent = currentUser.fullName.charAt(0);
+  if (companyEl) companyEl.textContent = currentUser.companyName || 'Prime Car Rental';
 
   // Topbar
   const topbarName = document.getElementById('topbarUserName');
@@ -47,9 +49,53 @@ function applyUserUI() {
     topbarBadge.className   = 'topbar-role-badge ' + currentUser.role;
   }
 
-  // Show "Users" nav item for managers only
-  if (currentUser.role === 'manager') {
+  // Show "Users" nav item for managers and superadmin
+  if (currentUser.role === 'manager' || currentUser.role === 'superadmin') {
     document.querySelectorAll('.nav-item-manager').forEach(el => el.style.display = '');
+  }
+
+  // Show "Companies" nav item for superadmin
+  if (currentUser.role === 'superadmin' || currentUser.isSuperAdmin) {
+    document.querySelectorAll('.nav-item-superadmin').forEach(el => el.style.display = '');
+    setupCompanySwitcher();
+  }
+}
+
+async function setupCompanySwitcher() {
+  const switchWrapper = document.getElementById('companySwitchWrapper');
+  const select = document.getElementById('companySelect');
+  if (!switchWrapper || !select) return;
+
+  try {
+    const companies = await API.get('/api/admin/companies');
+    if (!companies || companies.length === 0) return;
+
+    switchWrapper.style.display = 'flex';
+    select.innerHTML = companies.map(c => `
+      <option value="${c.id}" ${c.id === currentUser.companyId ? 'selected' : ''}>
+        ${esc(c.name)} (${c.status})
+      </option>
+    `).join('');
+
+    select.onchange = async () => {
+      const selectedId = select.value;
+      try {
+        await API.post(`/api/admin/switch-company/${selectedId}`);
+        const found = companies.find(c => String(c.id) === String(selectedId));
+        if (found) {
+          currentUser.companyId = found.id;
+          currentUser.companyName = found.name;
+          const companyEl = document.getElementById('brandCompany');
+          if (companyEl) companyEl.textContent = found.name;
+        }
+        showToast('Switched company view');
+        navigateTo(currentPage);
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    };
+  } catch (err) {
+    console.error('Setup switcher error:', err);
   }
 }
 
@@ -181,6 +227,7 @@ function navigateTo(page) {
     payments:  'Payments',
     expenses:  'Operating Expenses & Fleet Costs',
     users:     'User Management',
+    companies: 'Tenant Companies (SaaS)',
   };
   pageTitle.textContent = titles[page] || page;
 
@@ -197,6 +244,7 @@ function renderPage(page) {
     case 'payments':   renderPayments();  break;
     case 'expenses':   renderExpenses();  break;
     case 'users':      renderUsers();     break;
+    case 'companies':  renderCompanies(); break;
   }
 }
 
@@ -299,9 +347,13 @@ function esc(str) {
   return div.innerHTML;
 }
 
-// Helper: check if current user is manager
+// Helper: check if current user is manager or superadmin
 function isManager() {
-  return currentUser && currentUser.role === 'manager';
+  return currentUser && (currentUser.role === 'manager' || currentUser.role === 'superadmin');
+}
+
+function isSuperAdmin() {
+  return currentUser && (currentUser.role === 'superadmin' || currentUser.isSuperAdmin);
 }
 
 // =====================================================
@@ -1663,16 +1715,18 @@ async function openRentalAgreementModal(rentalId) {
     const custId = `CUST-${String(r.customer_id).padStart(4, '0')}`;
     const statusClass = (r.status || 'Rented').toLowerCase();
 
+    const companyTitle = (currentUser && currentUser.companyName) ? currentUser.companyName : 'CarRent Management';
+
     const docHTML = `
       <div class="printable-document rental-agreement-doc">
         <!-- Top Header -->
         <div class="doc-header">
           <div class="doc-brand">
-            <img src="/images/logo.png?v=2" alt="CarRent Logo" class="doc-logo" />
+            <img src="/images/logo.png?v=2" alt="Logo" class="doc-logo" />
             <div>
-              <h1 class="doc-company-name">CarRent Management</h1>
+              <h1 class="doc-company-name">${esc(companyTitle)}</h1>
               <p class="doc-company-tagline">Official Vehicle Rental Agreement & Contract</p>
-              <p class="doc-company-meta">Mogadishu, Somalia | Tel: +252 61 000 0000 | Email: rentals@carrent.so</p>
+              <p class="doc-company-meta">Official Fleet Rental System | Managed by ${esc(companyTitle)}</p>
             </div>
           </div>
           <div class="doc-meta-badge">
@@ -1758,7 +1812,7 @@ async function openRentalAgreementModal(rentalId) {
           <div class="doc-signature-block">
             <div class="sig-line"></div>
             <p class="sig-name">Authorized Signature (Shirkadda)</p>
-            <p class="sig-sub">CarRent Management Representative</p>
+            <p class="sig-sub">${esc(companyTitle)} Representative</p>
             <p class="sig-date">Date: ________________________</p>
           </div>
           <div class="doc-signature-block">
@@ -1771,7 +1825,7 @@ async function openRentalAgreementModal(rentalId) {
 
         <!-- Footer -->
         <div class="doc-footer">
-          <p>Waad ku mahadsan tahay doorashadaada CarRent! | Thank you for choosing CarRent.</p>
+          <p>Waad ku mahadsan tahay doorashadaada ${esc(companyTitle)}! | Thank you for choosing ${esc(companyTitle)}.</p>
           <small>This agreement is legally binding once signed by both parties.</small>
         </div>
       </div>
@@ -1809,17 +1863,18 @@ async function openPaymentReceiptModal(paymentId) {
     const startDate = p.rental_start_date ? p.rental_start_date.split('T')[0] : '—';
     const returnDate = p.rental_return_date ? p.rental_return_date.split('T')[0] : '—';
     const carText = p.car_name ? `${p.car_name} ${p.car_model || ''} (${p.car_plate || ''})` : `Rental #${p.rental_id}`;
+    const compName = (currentUser && currentUser.companyName) ? currentUser.companyName : 'CarRent Management';
 
     const docHTML = `
       <div class="printable-document payment-receipt-doc">
         <!-- Header -->
         <div class="doc-header">
           <div class="doc-brand">
-            <img src="/images/logo.png?v=2" alt="CarRent Logo" class="doc-logo" />
+            <img src="/images/logo.png?v=2" alt="Logo" class="doc-logo" />
             <div>
-              <h1 class="doc-company-name">CarRent Management</h1>
+              <h1 class="doc-company-name">${esc(compName)}</h1>
               <p class="doc-company-tagline">Official Payment Receipt & Invoice</p>
-              <p class="doc-company-meta">Mogadishu, Somalia | Tel: +252 61 000 0000 | accounts@carrent.so</p>
+              <p class="doc-company-meta">Official Receipt | Issued by ${esc(compName)}</p>
             </div>
           </div>
           <div class="doc-meta-badge">
@@ -2792,6 +2847,252 @@ window.deleteUser = function(id) {
 };
 
 // =====================================================
+// 8. COMPANIES & SAAS TENANTS (SuperAdmin only)
+// =====================================================
+async function renderCompanies() {
+  if (!isSuperAdmin()) {
+    pageContainer.innerHTML = `<div class="error-state" style="color:red;padding:24px">Access restricted to SuperAdmin.</div>`;
+    return;
+  }
+
+  pageContainer.innerHTML = '<div style="padding:40px;color:#64748b;display:flex;gap:10px;align-items:center;"><div class="spinner"></div><span>Loading platform companies…</span></div>';
+
+  try {
+    const companies = await API.get('/api/admin/companies');
+
+    const totalCompanies = companies.length;
+    const activeCompanies = companies.filter(c => c.status === 'active').length;
+    const totalCars = companies.reduce((acc, c) => acc + (parseInt(c.total_cars) || 0), 0);
+    const totalRev = companies.reduce((acc, c) => acc + parseFloat(c.total_revenue || 0), 0);
+
+    let html = `
+      <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">
+        <div>
+          <h2 style="font-size:1.45rem;color:var(--color-navy);font-weight:700;">Tenant Companies (SaaS)</h2>
+          <p style="color:var(--color-text-secondary);font-size:0.9rem;margin-top:4px;">Manage all registered rental companies, subscriptions, and access statuses.</p>
+        </div>
+        <button class="btn btn-primary" onclick="openCreateCompanyModal()">
+          ${Icons.plus}
+          <span>Add New Company</span>
+        </button>
+      </div>
+
+      <!-- Overview Stats -->
+      <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 24px;">
+        <div class="stat-card" style="border-left-color: var(--color-primary);">
+          <span class="stat-label">Total Registered Companies</span>
+          <span class="stat-value" style="color:var(--color-primary)">${totalCompanies}</span>
+          <small class="text-muted" style="margin-top:4px;font-size:0.8rem">${activeCompanies} Active, ${totalCompanies - activeCompanies} Suspended</small>
+        </div>
+        <div class="stat-card info">
+          <span class="stat-label">Total Platform Fleet</span>
+          <span class="stat-value" style="color:#2b5cb8">${totalCars} Cars</span>
+          <small class="text-muted" style="margin-top:4px;font-size:0.8rem">Managed across all companies</small>
+        </div>
+        <div class="stat-card success" style="border-left-color: #1e7e34;">
+          <span class="stat-label">Total Platform Revenue</span>
+          <span class="stat-value" style="color:#1e7e34">$${totalRev.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+          <small class="text-muted" style="margin-top:4px;font-size:0.8rem">Cumulative payments settled</small>
+        </div>
+      </div>
+
+      <!-- Companies List Cards -->
+      <div class="companies-grid">
+    `;
+
+    if (companies.length === 0) {
+      html += `
+        <div class="empty-state" style="grid-column: 1 / -1; background:#fff; padding:40px; border-radius:12px; text-align:center;">
+          <p style="color:#64748b">No companies registered yet. Click "Add New Company" to get started.</p>
+        </div>
+      `;
+    } else {
+      companies.forEach(c => {
+        const isActive = c.status === 'active';
+        const isCurrentActive = c.id === currentUser.companyId;
+
+        html += `
+          <div class="company-card">
+            <div class="company-card-header">
+              <div>
+                <h3 class="company-name-title">${esc(c.name)}</h3>
+                <span class="company-plan-tag">${esc(c.plan || 'Standard')} Plan</span>
+                ${isCurrentActive ? '<span style="font-size:0.75rem; color:#358dd5; font-weight:700; margin-left:6px;">✓ Active View</span>' : ''}
+              </div>
+              <span class="company-status-badge ${isActive ? 'active' : 'suspended'}">${esc(c.status)}</span>
+            </div>
+
+            <div style="font-size:0.83rem; color:var(--color-text-secondary); margin-bottom:12px; display:flex; flex-direction:column; gap:4px;">
+              <div>📧 <strong>Email:</strong> ${esc(c.email || 'N/A')}</div>
+              <div>📞 <strong>Phone:</strong> ${esc(c.phone || 'N/A')}</div>
+              <div>📍 <strong>Location:</strong> ${esc(c.address || 'N/A')}</div>
+            </div>
+
+            <div class="company-stats-list">
+              <div class="company-stat-box">
+                <span class="company-stat-value">${c.total_cars || 0}</span>
+                <span class="company-stat-label">Cars</span>
+              </div>
+              <div class="company-stat-box">
+                <span class="company-stat-value">${c.total_rentals || 0}</span>
+                <span class="company-stat-label">Rentals</span>
+              </div>
+              <div class="company-stat-box">
+                <span class="company-stat-value">${c.total_users || 0}</span>
+                <span class="company-stat-label">Staff Users</span>
+              </div>
+              <div class="company-stat-box">
+                <span class="company-stat-value">$${parseFloat(c.total_revenue || 0).toFixed(0)}</span>
+                <span class="company-stat-label">Revenue</span>
+              </div>
+            </div>
+
+            <div class="company-card-footer">
+              <button class="btn btn-secondary btn-sm" onclick="switchActiveCompany(${c.id})">
+                Switch View
+              </button>
+              <div style="display:flex; gap:6px;">
+                <button class="btn btn-sm ${isActive ? 'btn-danger' : 'btn-primary'}" onclick="toggleCompanyStatus(${c.id}, '${isActive ? 'suspended' : 'active'}')">
+                  ${isActive ? 'Suspend' : 'Activate'}
+                </button>
+                <button class="btn-icon danger" onclick="deleteCompany(${c.id}, '${esc(c.name)}')" title="Delete company">
+                  ${Icons.trash}
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    html += `</div>`;
+    pageContainer.innerHTML = html;
+  } catch (err) {
+    pageContainer.innerHTML = `<div class="error-state" style="color:red;padding:24px">Failed to load companies: ${esc(err.message)}</div>`;
+  }
+}
+
+window.switchActiveCompany = async function(id) {
+  try {
+    await API.post(`/api/admin/switch-company/${id}`);
+    currentUser.companyId = id;
+    showToast('Switched to company view successfully');
+    initAuth();
+  } catch (err) {
+    showToast(err.message, true);
+  }
+};
+
+window.toggleCompanyStatus = async function(id, newStatus) {
+  try {
+    await API.put(`/api/admin/companies/${id}`, { status: newStatus });
+    showToast(`Company status updated to ${newStatus}`);
+    renderCompanies();
+    setupCompanySwitcher();
+  } catch (err) {
+    showToast(err.message, true);
+  }
+};
+
+window.deleteCompany = function(id, name) {
+  openConfirm(`Are you sure you want to delete company "${name}"? This will permanently delete ALL of its cars, rentals, payments, customers, and user accounts.`, async () => {
+    try {
+      await API.delete(`/api/admin/companies/${id}`);
+      showToast('Company and all data deleted.');
+      renderCompanies();
+      setupCompanySwitcher();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  });
+};
+
+window.openCreateCompanyModal = function() {
+  const formHTML = `
+    <form id="createCompanyForm" class="modal-form">
+      <div class="form-group">
+        <label for="companyName">Company Name <span class="required">*</span></label>
+        <input type="text" id="companyName" required placeholder="e.g. SomCar Rentals" />
+      </div>
+      <div class="form-grid-2col">
+        <div class="form-group">
+          <label for="companyEmail">Company Email</label>
+          <input type="email" id="companyEmail" placeholder="info@somcar.com" />
+        </div>
+        <div class="form-group">
+          <label for="companyPhone">Phone Number</label>
+          <input type="text" id="companyPhone" placeholder="+252 61 0000000" />
+        </div>
+      </div>
+      <div class="form-grid-2col">
+        <div class="form-group">
+          <label for="companyAddress">Office Location / City</label>
+          <input type="text" id="companyAddress" placeholder="Mogadishu, Somalia" />
+        </div>
+        <div class="form-group">
+          <label for="companyPlan">SaaS Subscription Plan</label>
+          <select id="companyPlan">
+            <option value="standard">Standard</option>
+            <option value="starter">Starter</option>
+            <option value="premium">Premium</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin: 16px 0; padding-top: 14px; border-top: 1px solid var(--color-border);">
+        <h4 style="font-size:0.95rem; margin-bottom: 12px; color:var(--color-navy); font-weight:600;">Assign Initial Company Manager (Optional)</h4>
+      </div>
+
+      <div class="form-group">
+        <label for="compManagerName">Manager Full Name</label>
+        <input type="text" id="compManagerName" placeholder="e.g. Ali Omar" />
+      </div>
+      <div class="form-grid-2col">
+        <div class="form-group">
+          <label for="compManagerEmail">Manager Email</label>
+          <input type="email" id="compManagerEmail" placeholder="manager@somcar.com" />
+        </div>
+        <div class="form-group">
+          <label for="compManagerPassword">Manager Password</label>
+          <input type="password" id="compManagerPassword" placeholder="Min 8 characters" minlength="8" />
+        </div>
+      </div>
+
+      <div class="form-actions" style="margin-top: 20px;">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Company</button>
+      </div>
+    </form>
+  `;
+
+  openModal('Add New Company (Tenant)', formHTML);
+
+  $('#createCompanyForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const body = {
+      name: $('#companyName').value.trim(),
+      email: $('#companyEmail').value.trim() || null,
+      phone: $('#companyPhone').value.trim() || null,
+      address: $('#companyAddress').value.trim() || null,
+      plan: $('#companyPlan').value,
+      manager_name: $('#compManagerName').value.trim() || null,
+      manager_email: $('#compManagerEmail').value.trim() || null,
+      manager_password: $('#compManagerPassword').value || null,
+    };
+
+    try {
+      await API.post('/api/admin/companies', body);
+      showToast('Company created successfully!');
+      closeModal();
+      renderCompanies();
+      setupCompanySwitcher();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  });
+};
+
+// =====================================================
 // EXPOSE FUNCTIONS FOR INLINE ONCLICK
 // =====================================================
 window.openCarForm              = openCarForm;
@@ -2805,6 +3106,8 @@ window.closePrintModal          = closePrintModal;
 window.openExpenseForm          = openExpenseForm;
 window.deleteExpense            = deleteExpense;
 window.renderExpenses           = renderExpenses;
+window.renderCompanies          = renderCompanies;
+window.openCreateCompanyModal   = openCreateCompanyModal;
 
 // =====================================================
 // INIT — check auth, then render

@@ -91,9 +91,34 @@ async function initTables() {
   const p = getPool();
   const client = await p.connect();
   try {
+    // Companies table for Multi-Tenancy
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS companies (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        slug VARCHAR(100) UNIQUE,
+        email VARCHAR(255),
+        phone VARCHAR(100),
+        address TEXT,
+        logo_url TEXT,
+        status VARCHAR(50) NOT NULL DEFAULT 'active',
+        plan VARCHAR(50) NOT NULL DEFAULT 'standard',
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    // Ensure default company exists
+    await client.query(`
+      INSERT INTO companies (name, email, phone, status, plan)
+      SELECT 'Prime Car Rental', 'info@primerental.com', '+252 61 5000000', 'active', 'premium'
+      WHERE NOT EXISTS (SELECT 1 FROM companies);
+    `);
+
     await client.query(`
       CREATE TABLE IF NOT EXISTS cars (
         id SERIAL PRIMARY KEY,
+        company_id INTEGER REFERENCES companies(id) ON DELETE CASCADE,
         name VARCHAR(255) NOT NULL,
         model VARCHAR(255) NOT NULL,
         plate VARCHAR(100) NOT NULL,
@@ -103,22 +128,27 @@ async function initTables() {
         created_at TIMESTAMP DEFAULT NOW()
       );
 
+      ALTER TABLE cars ADD COLUMN IF NOT EXISTS company_id INTEGER REFERENCES companies(id) ON DELETE CASCADE;
       ALTER TABLE cars ADD COLUMN IF NOT EXISTS image_url TEXT;
     `);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS customers (
         id SERIAL PRIMARY KEY,
+        company_id INTEGER REFERENCES companies(id) ON DELETE CASCADE,
         full_name VARCHAR(255) NOT NULL,
         phone VARCHAR(100) NOT NULL,
         license VARCHAR(255) NOT NULL,
         created_at TIMESTAMP DEFAULT NOW()
       );
+
+      ALTER TABLE customers ADD COLUMN IF NOT EXISTS company_id INTEGER REFERENCES companies(id) ON DELETE CASCADE;
     `);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS rentals (
         id SERIAL PRIMARY KEY,
+        company_id INTEGER REFERENCES companies(id) ON DELETE CASCADE,
         customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
         car_id INTEGER NOT NULL REFERENCES cars(id) ON DELETE CASCADE,
         start_date DATE NOT NULL,
@@ -129,11 +159,14 @@ async function initTables() {
         status VARCHAR(50) NOT NULL DEFAULT 'Rented',
         created_at TIMESTAMP DEFAULT NOW()
       );
+
+      ALTER TABLE rentals ADD COLUMN IF NOT EXISTS company_id INTEGER REFERENCES companies(id) ON DELETE CASCADE;
     `);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS payments (
         id SERIAL PRIMARY KEY,
+        company_id INTEGER REFERENCES companies(id) ON DELETE CASCADE,
         rental_id INTEGER NOT NULL REFERENCES rentals(id) ON DELETE CASCADE,
         customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
         amount NUMERIC(10, 2) NOT NULL,
@@ -146,6 +179,7 @@ async function initTables() {
         created_at TIMESTAMP DEFAULT NOW()
       );
 
+      ALTER TABLE payments ADD COLUMN IF NOT EXISTS company_id INTEGER REFERENCES companies(id) ON DELETE CASCADE;
       ALTER TABLE payments ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'Cash';
       ALTER TABLE payments ADD COLUMN IF NOT EXISTS payment_date DATE DEFAULT CURRENT_DATE;
       ALTER TABLE payments ADD COLUMN IF NOT EXISTS notes TEXT;
@@ -154,6 +188,7 @@ async function initTables() {
 
       CREATE TABLE IF NOT EXISTS expenses (
         id SERIAL PRIMARY KEY,
+        company_id INTEGER REFERENCES companies(id) ON DELETE CASCADE,
         title VARCHAR(255) NOT NULL,
         category VARCHAR(100) NOT NULL CHECK (category IN ('Fuel', 'Maintenance', 'Insurance', 'Staff Salaries', 'Other')),
         amount NUMERIC(10, 2) NOT NULL CHECK (amount > 0),
@@ -164,18 +199,25 @@ async function initTables() {
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );
+
+      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS company_id INTEGER REFERENCES companies(id) ON DELETE CASCADE;
     `);
 
     // Users table for authentication
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
+        company_id INTEGER REFERENCES companies(id) ON DELETE CASCADE,
         email VARCHAR(255) NOT NULL UNIQUE,
         password_hash VARCHAR(255) NOT NULL,
         full_name VARCHAR(255) NOT NULL,
-        role VARCHAR(50) NOT NULL DEFAULT 'staff' CHECK (role IN ('manager', 'staff')),
+        role VARCHAR(50) NOT NULL DEFAULT 'staff' CHECK (role IN ('superadmin', 'manager', 'staff')),
         created_at TIMESTAMP DEFAULT NOW()
       );
+
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS company_id INTEGER REFERENCES companies(id) ON DELETE CASCADE;
+      ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
+      ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('superadmin', 'manager', 'staff'));
     `);
 
     // Session store table for connect-pg-simple
@@ -192,7 +234,7 @@ async function initTables() {
       CREATE INDEX IF NOT EXISTS IDX_session_expire ON session (expire);
     `);
 
-    console.log('✓ Database tables ready');
+    console.log('✓ Database tables ready (Multi-Tenant enabled)');
   } finally {
     client.release();
   }
