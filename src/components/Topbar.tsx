@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Menu, Building } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { User } from '@/types';
 
 interface TopbarProps {
@@ -28,8 +28,6 @@ export default function Topbar({
   companyName,
   onToggleMobile,
 }: TopbarProps) {
-  const currentCompany = companyName || currentUser?.companyName || 'Prime Car Rental';
-
   return (
     <header className="topbar">
       <div className="topbar-left">
@@ -47,12 +45,6 @@ export default function Topbar({
       </div>
 
       <div className="topbar-user">
-        <div className="company-active-badge">
-          <Building size={14} className="company-badge-icon" />
-          <span className="company-badge-label">Company:</span>
-          <span className="company-badge-name">{currentCompany}</span>
-        </div>
-
         <div className="topbar-profile-chip">
           <span className={`topbar-role-badge role-${currentUser?.role || 'staff'}`}>
             {currentUser?.role || 'staff'}
