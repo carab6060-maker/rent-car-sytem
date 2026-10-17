@@ -181,7 +181,7 @@ export default function CustomersView({ currentUser, showToast, openConfirm }: C
                     </td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <FileCheck size={14} color="#2563eb" />
+                        <FileCheck size={14} color="#358dd5" />
                         <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{c.license}</span>
                       </div>
                     </td>

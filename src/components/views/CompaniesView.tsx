@@ -141,7 +141,7 @@ export default function CompaniesView({
                 style={{
                   background: '#fff',
                   borderRadius: '12px',
-                  border: isCurrent ? '2px solid #2563eb' : '1px solid #e2e8f0',
+                  border: isCurrent ? '2px solid #358dd5' : '1px solid #e2e8f0',
                   padding: '20px',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                   position: 'relative',
@@ -155,8 +155,8 @@ export default function CompaniesView({
                       position: 'absolute',
                       top: '12px',
                       right: '12px',
-                      background: '#eff6ff',
-                      color: '#2563eb',
+                      background: '#eff6fc',
+                      color: '#358dd5',
                       fontSize: '0.75rem',
                       fontWeight: 700,
                       padding: '3px 8px',
@@ -176,11 +176,11 @@ export default function CompaniesView({
                       width: '42px',
                       height: '42px',
                       borderRadius: '8px',
-                      background: '#f1f5f9',
+                      background: '#eff6fc',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: '#2563eb',
+                      color: '#358dd5',
                     }}
                   >
                     <Building2 size={22} />

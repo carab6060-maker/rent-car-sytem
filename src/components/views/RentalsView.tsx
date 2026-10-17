@@ -403,7 +403,7 @@ export default function RentalsView({
               <span>Rate Per Day:</span>
               <strong style={{ color: '#0f172a' }}>${selectedCarObj ? parseFloat(String(selectedCarObj.price_per_day)).toFixed(2) : '0.00'}</strong>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid #cbd5e1', fontSize: '1.05rem', fontWeight: 700, color: '#2563eb' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid #cbd5e1', fontSize: '1.05rem', fontWeight: 700, color: '#20225d' }}>
               <span>Total Contract Price:</span>
               <span>${totalPrice.toFixed(2)}</span>
             </div>

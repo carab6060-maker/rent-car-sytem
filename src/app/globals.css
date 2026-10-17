@@ -2462,12 +2462,12 @@ tbody tr:last-child td {
    WORLD-CLASS MODERN SAAS DESIGN OVERRIDES
    ======================================================== */
 
-/* Sidebar Modern Architecture */
+/* Sidebar Modern Architecture - Restored to Brand Palette (#1a1d4e & #358dd5) */
 .sidebar {
   width: var(--sidebar-width) !important;
-  background: linear-gradient(180deg, #0d1226 0%, #080b18 100%) !important;
+  background: #1a1d4e !important;
   border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25) !important;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15) !important;
 }
 
 .sidebar-brand {
@@ -2479,15 +2479,15 @@ tbody tr:last-child td {
 }
 
 .brand-icon-box {
-  width: 42px !important;
-  height: 42px !important;
-  border-radius: 12px !important;
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 10px !important;
+  background: #358dd5 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   color: #ffffff !important;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45) !important;
+  box-shadow: 0 2px 8px rgba(53, 141, 213, 0.3) !important;
   flex-shrink: 0 !important;
 }
 
@@ -2555,7 +2555,7 @@ button.nav-item,
 }
 
 .sidebar .nav-item:hover {
-  background: rgba(255, 255, 255, 0.07) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
   color: #ffffff !important;
   transform: translateX(3px) !important;
 }
@@ -2565,10 +2565,10 @@ button.nav-item,
 }
 
 .sidebar .nav-item.active {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+  background: #358dd5 !important;
   color: #ffffff !important;
   font-weight: 600 !important;
-  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35) !important;
+  box-shadow: 0 2px 10px rgba(53, 141, 213, 0.35) !important;
   transform: none !important;
 }
 
@@ -2582,7 +2582,7 @@ button.nav-item,
   border-radius: 50% !important;
   background: #ffffff !important;
   margin-left: auto !important;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.9) !important;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.8) !important;
 }
 
 .sidebar-footer {
@@ -2591,7 +2591,7 @@ button.nav-item,
   display: flex !important;
   flex-direction: column !important;
   gap: 12px !important;
-  background: rgba(0, 0, 0, 0.2) !important;
+  background: rgba(0, 0, 0, 0.12) !important;
 }
 
 .sidebar-user {
@@ -2605,10 +2605,10 @@ button.nav-item,
 }
 
 .sidebar-user-avatar {
-  width: 36px !important;
-  height: 36px !important;
-  border-radius: 10px !important;
-  background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%) !important;
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 50% !important;
+  background: #358dd5 !important;
   color: #ffffff !important;
   font-size: 0.95rem !important;
   font-weight: 700 !important;
@@ -2616,7 +2616,7 @@ button.nav-item,
   align-items: center !important;
   justify-content: center !important;
   flex-shrink: 0 !important;
-  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.3) !important;
+  box-shadow: 0 2px 6px rgba(53, 141, 213, 0.25) !important;
 }
 
 .sidebar-user-info {
@@ -2767,13 +2767,13 @@ button.nav-item,
   display: inline-flex !important;
   align-items: center !important;
   gap: 8px !important;
-  background: #eff6ff !important;
-  border: 1px solid #dbeafe !important;
+  background: #eff6fc !important;
+  border: 1px solid #d0e3f7 !important;
   padding: 4px 10px !important;
   border-radius: 9999px !important;
   font-size: 0.78rem !important;
   font-weight: 600 !important;
-  color: #2563eb !important;
+  color: #358dd5 !important;
   margin-bottom: 8px !important;
 }
 
@@ -2874,12 +2874,13 @@ button.nav-item,
 
 .modern-stat-card:hover::before {
   opacity: 1 !important;
+  border-radius: 9999px;
 }
 
-.card-blue::before { background: linear-gradient(90deg, #38bdf8, #2563eb) !important; }
-.card-green::before { background: linear-gradient(90deg, #34d399, #059669) !important; }
-.card-amber::before { background: linear-gradient(90deg, #fbbf24, #d97706) !important; }
-.card-purple::before { background: linear-gradient(90deg, #a78bfa, #7c3aed) !important; }
+.card-blue::before { background: #358dd5 !important; }
+.card-green::before { background: #10b981 !important; }
+.card-amber::before { background: #f59e0b !important; }
+.card-purple::before { background: #8b5cf6 !important; }
 
 .stat-card-header {
   display: flex !important;
@@ -2906,7 +2907,7 @@ button.nav-item,
   flex-shrink: 0 !important;
 }
 
-.icon-blue { background: #eff6ff !important; color: #2563eb !important; }
+.icon-blue { background: #eff6fc !important; color: #358dd5 !important; }
 .icon-green { background: #ecfdf5 !important; color: #059669 !important; }
 .icon-amber { background: #fffbeb !important; color: #d97706 !important; }
 .icon-purple { background: #f5f3ff !important; color: #7c3aed !important; }
@@ -3004,13 +3005,13 @@ button.nav-item,
 }
 
 .utilization-pill {
-  background: #eff6ff !important;
-  color: #1d4ed8 !important;
+  background: #eff6fc !important;
+  color: #20225d !important;
   font-size: 0.84rem !important;
   font-weight: 700 !important;
   padding: 5px 12px !important;
   border-radius: 9999px !important;
-  border: 1px solid #bfdbfe !important;
+  border: 1px solid #d0e3f7 !important;
 }
 
 .progress-bar-track {
@@ -3023,7 +3024,7 @@ button.nav-item,
 
 .progress-bar-fill {
   height: 100% !important;
-  background: linear-gradient(90deg, #38bdf8 0%, #2563eb 100%) !important;
+  background: #358dd5 !important;
   border-radius: 9999px !important;
   transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
@@ -3172,8 +3173,8 @@ button.nav-item,
   width: 30px !important;
   height: 30px !important;
   border-radius: 50% !important;
-  background: #eff6ff !important;
-  color: #2563eb !important;
+  background: #eff6fc !important;
+  color: #358dd5 !important;
   font-weight: 700 !important;
   font-size: 0.8rem !important;
   display: flex !important;
@@ -3374,7 +3375,7 @@ button.nav-item,
   margin: 6px 0 10px !important;
   font-size: 1.15rem !important;
   font-weight: 800 !important;
-  color: #2563eb !important;
+  color: #20225d !important;
   letter-spacing: -0.02em !important;
 }
 

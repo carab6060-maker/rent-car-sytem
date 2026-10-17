@@ -216,16 +216,22 @@ export default function LoginPage() {
             style={{
               width: '100%',
               padding: '12px',
-              background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+              backgroundColor: '#20225d',
               color: '#ffffff',
               border: 'none',
-              borderRadius: '10px',
+              borderRadius: '8px',
               fontSize: '0.96rem',
-              fontWeight: 700,
+              fontWeight: 600,
               cursor: loading ? 'not-allowed' : 'pointer',
               opacity: loading ? 0.7 : 1,
-              boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)',
-              transition: 'all 0.2s ease',
+              boxShadow: '0 4px 12px rgba(32, 34, 93, 0.2)',
+              transition: 'background-color 0.2s ease, transform 0.2s ease',
+            }}
+            onMouseOver={(e) => {
+              if (!loading) (e.currentTarget.style.backgroundColor = '#161845');
+            }}
+            onMouseOut={(e) => {
+              if (!loading) (e.currentTarget.style.backgroundColor = '#20225d');
             }}
           >
             {loading ? 'Signing in…' : 'Sign In'}
