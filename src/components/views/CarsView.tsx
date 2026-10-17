@@ -19,6 +19,26 @@ interface CarsViewProps {
   openConfirm: (msg: string, onConfirm: () => void) => void;
 }
 
+export function getCarImageUrl(car?: Partial<Car> | null) {
+  if (car && car.image_url && typeof car.image_url === 'string' && car.image_url.trim()) {
+    return car.image_url.trim();
+  }
+  const name = ((car && car.name) || '').toLowerCase();
+  const model = ((car && car.model) || '').toLowerCase();
+  const text = `${name} ${model}`;
+
+  if (text.includes('mercedes') || text.includes('c-class') || text.includes('c class') || text.includes('benz')) {
+    return '/images/cars/mercedes-c-class.jpg';
+  }
+  if (text.includes('surf') || text.includes('hilux') || text.includes('4runner')) {
+    return '/images/cars/toyota-surf.jpg';
+  }
+  if (text.includes('prado') || text.includes('land cruiser') || text.includes('tx')) {
+    return '/images/cars/prado-tx.jpg';
+  }
+  return '/images/cars/default-car.jpg';
+}
+
 export default function CarsView({ currentUser, onRentCar, showToast, openConfirm }: CarsViewProps) {
   const [cars, setCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
@@ -211,22 +231,34 @@ export default function CarsView({ currentUser, onRentCar, showToast, openConfir
               }}
             >
               {/* Car Image Preview */}
-              <div style={{ height: '160px', background: '#f8fafc', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {car.image_url ? (
-                  <img
-                    src={car.image_url}
-                    alt={car.name}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    onError={(e: any) => {
-                      e.target.style.display = 'none';
-                    }}
-                  />
-                ) : (
-                  <CarIcon size={48} color="#94a3b8" />
-                )}
+              <div
+                style={{
+                  height: '180px',
+                  background: '#f1f5f9',
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                }}
+              >
+                <img
+                  src={getCarImageUrl(car)}
+                  alt={car.name}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={(e: any) => {
+                    e.currentTarget.src = '/images/cars/default-car.jpg';
+                  }}
+                />
                 <span
                   className={`badge ${car.status === 'Available' ? 'badge-success' : 'badge-warning'}`}
-                  style={{ position: 'absolute', top: '12px', right: '12px' }}
+                  style={{
+                    position: 'absolute',
+                    top: '12px',
+                    right: '12px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+                    fontWeight: 700,
+                  }}
                 >
                   {car.status}
                 </span>
@@ -348,14 +380,27 @@ export default function CarsView({ currentUser, onRentCar, showToast, openConfir
           </div>
 
           <div className="form-group" style={{ marginBottom: '20px' }}>
-            <label className="form-label">Car Image URL (Optional)</label>
-            <input
-              type="url"
-              className="form-control"
-              placeholder="https://example.com/car.jpg"
-              value={formData.image_url}
-              onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-            />
+            <label className="form-label">Vehicle Image (Auto-matched or Custom URL)</label>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '6px' }}>
+              <div style={{ width: '80px', height: '56px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0', background: '#f8fafc', flexShrink: 0 }}>
+                <img
+                  src={getCarImageUrl({ name: formData.name, model: formData.model, image_url: formData.image_url })}
+                  alt="Preview"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={(e: any) => { e.currentTarget.src = '/images/cars/default-car.jpg'; }}
+                />
+              </div>
+              <input
+                type="url"
+                className="form-control"
+                placeholder="Optional custom image URL (e.g. https://...)"
+                value={formData.image_url}
+                onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+              />
+            </div>
+            <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+              Auto-detects: Mercedes, Surf, Prado, or uses custom URL / default car photo.
+            </span>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
