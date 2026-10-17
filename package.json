@@ -2,12 +2,11 @@
   "name": "car-rental-system",
   "version": "1.0.0",
   "description": "Car Rental Management System",
-  "main": "server.js",
   "scripts": {
-    "start": "next start",
     "dev": "next dev",
     "build": "next build",
-    "server": "node server.js"
+    "start": "next start",
+    "legacy:server": "node legacy_archive/server.js"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.0",

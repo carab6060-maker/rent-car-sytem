@@ -1,6 +1,6 @@
 # Car Rental Management System 🚗
 
-A simple, fast, and professional Car Rental Management System built with HTML, CSS, JavaScript (Vanilla), Express.js, and Neon PostgreSQL database.
+A simple, fast, and professional Multi-Tenant Car Rental Management System built with Next.js 14 (App Router), React, TypeScript, and Neon PostgreSQL database.
 
 ## Features
 
