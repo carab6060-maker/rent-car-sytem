@@ -57,12 +57,12 @@ export default function Sidebar({
     <aside className={`sidebar ${isOpen ? 'open' : ''}`} id="sidebar">
       <div className="sidebar-brand">
         <div className="brand-icon-box">
-          <Car className="brand-icon-svg" />
+          <Car size={22} className="brand-icon-svg" />
         </div>
         <div className="brand-text-wrapper">
           <span className="brand-title">CarRent SaaS</span>
           <span className="brand-company" id="brandCompany">
-            {companyName || currentUser?.companyName || 'Loading...'}
+            {companyName || currentUser?.companyName || 'Prime Car Rental'}
           </span>
         </div>
       </div>
@@ -81,8 +81,9 @@ export default function Sidebar({
                 if (onCloseMobile) onCloseMobile();
               }}
             >
-              <Icon className="nav-icon" size={20} />
-              <span>{item.label}</span>
+              <Icon className="nav-icon" size={19} />
+              <span className="nav-label">{item.label}</span>
+              {isActive && <span className="nav-active-pill" />}
             </button>
           );
         })}
@@ -91,7 +92,7 @@ export default function Sidebar({
       <div className="sidebar-footer">
         <div className="sidebar-user">
           <div className="sidebar-user-avatar">
-            {currentUser?.fullName ? currentUser.fullName.charAt(0).toUpperCase() : '?'}
+            {currentUser?.fullName ? currentUser.fullName.charAt(0).toUpperCase() : 'U'}
           </div>
           <div className="sidebar-user-info">
             <span className="sidebar-user-name" title={currentUser?.fullName}>
@@ -103,8 +104,8 @@ export default function Sidebar({
           </div>
         </div>
         <button className="btn-logout" onClick={onLogout} title="Sign out" type="button">
-          <LogOut size={18} />
-          <span>Logout</span>
+          <LogOut size={16} />
+          <span>Sign Out</span>
         </button>
       </div>
     </aside>
