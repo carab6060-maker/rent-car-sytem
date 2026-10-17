@@ -63,7 +63,11 @@ body {
   background-color: var(--color-bg);
   color: var(--color-text);
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 /* ===========================
@@ -3505,6 +3509,117 @@ textarea.form-control:focus {
 .form-group {
   margin-bottom: 16px !important;
 }
+
+/* ========================================================
+   FULL-WIDTH RESPONSIVE LAYOUT & ZERO EMPTY SPACES
+   ======================================================== */
+.app-container {
+  width: 100% !important;
+  min-height: 100vh !important;
+  display: flex !important;
+  flex: 1 1 100% !important;
+  position: relative !important;
+}
+
+.main-content {
+  margin-left: var(--sidebar-width, 240px) !important;
+  width: calc(100% - var(--sidebar-width, 240px)) !important;
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 100vh !important;
+  background-color: #f8fafc !important;
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+}
+
+.page-container {
+  width: 100% !important;
+  flex: 1 1 auto !important;
+  padding: 24px 32px !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+@media (max-width: 768px) {
+  .page-container {
+    padding: 16px !important;
+  }
+}
+
+/* All content view wrappers must expand 100% */
+.dashboard-content,
+.cars-content,
+.customers-content,
+.rentals-content,
+.payments-content,
+.expenses-content,
+.users-content,
+.companies-content {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+}
+
+/* Universal Full-Width Table Styling */
+.table-responsive,
+.table-wrapper {
+  width: 100% !important;
+  overflow-x: auto !important;
+}
+
+table,
+.data-table,
+.modern-data-table {
+  width: 100% !important;
+  min-width: 100% !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  background: #ffffff !important;
+  font-size: 0.9rem !important;
+}
+
+table thead th,
+.data-table thead th,
+.modern-data-table thead th {
+  background: #f8fafc !important;
+  color: #475569 !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  padding: 14px 20px !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  text-align: left !important;
+  white-space: nowrap !important;
+}
+
+table tbody td,
+.data-table tbody td,
+.modern-data-table tbody td {
+  padding: 14px 20px !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  color: #1e293b !important;
+  vertical-align: middle !important;
+  font-size: 0.9rem !important;
+}
+
+table tbody tr:hover,
+.data-table tbody tr:hover,
+.modern-data-table tbody tr:hover {
+  background: #f8fafc !important;
+}
+
 
 
 

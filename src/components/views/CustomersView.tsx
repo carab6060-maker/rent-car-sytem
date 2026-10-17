@@ -156,16 +156,16 @@ export default function CustomersView({ currentUser, showToast, openConfirm }: C
           <p style={{ fontSize: '1rem', fontWeight: 500 }}>No customers found.</p>
         </div>
       ) : (
-        <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-          <div className="table-responsive">
-            <table className="data-table">
+        <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 2px 10px rgba(15,23,42,0.04)', width: '100%' }}>
+          <div className="table-responsive" style={{ width: '100%' }}>
+            <table className="data-table" style={{ width: '100%' }}>
               <thead>
                 <tr>
-                  <th>#</th>
+                  <th style={{ width: '80px' }}>#</th>
                   <th>Full Name</th>
                   <th>Phone Number</th>
                   <th>Driver License</th>
-                  <th style={{ textAlign: 'right' }}>Actions</th>
+                  <th style={{ textAlign: 'right', width: '120px' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
