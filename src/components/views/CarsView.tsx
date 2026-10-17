@@ -165,41 +165,42 @@ export default function CarsView({ currentUser, onRentCar, showToast, openConfir
   return (
     <div className="cars-content">
       {/* Header & Controls */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '14px' }}>
         <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a' }}>Fleet Inventory</h2>
-          <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Manage company vehicles, rates, and availability</p>
+          <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>Fleet Inventory</h2>
+          <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '2px 0 0' }}>Manage vehicles, rental rates, and live availability</p>
         </div>
 
         {isManager && (
-          <button className="btn btn-primary" onClick={handleOpenAdd} type="button">
-            <Plus size={16} style={{ marginRight: '6px' }} />
+          <button className="btn btn-primary btn-sm" onClick={handleOpenAdd} type="button" style={{ height: '34px' }}>
+            <Plus size={15} style={{ marginRight: '4px' }} />
             Add New Vehicle
           </button>
         )}
       </div>
 
       {/* Filter and Search Bar */}
-      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '24px' }}>
-        <div style={{ position: 'relative', flex: '1', minWidth: '240px' }}>
-          <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '16px' }}>
+        <div style={{ position: 'relative', flex: '1', minWidth: '220px' }}>
+          <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
           <input
             type="text"
             className="form-control"
             placeholder="Search by car name, model, plate..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ paddingLeft: '38px' }}
+            style={{ paddingLeft: '36px', height: '34px', fontSize: '0.84rem' }}
           />
         </div>
 
-        <div style={{ display: 'flex', gap: '6px' }}>
+        <div style={{ display: 'flex', gap: '5px' }}>
           {['ALL', 'Available', 'Rented'].map((st) => (
             <button
               key={st}
               className={`btn btn-sm ${statusFilter === st ? 'btn-primary' : 'btn-secondary'}`}
               onClick={() => setStatusFilter(st)}
               type="button"
+              style={{ height: '34px', fontSize: '0.78rem', padding: '0 12px', fontWeight: 600 }}
             >
               {st}
             </button>
@@ -209,110 +210,79 @@ export default function CarsView({ currentUser, onRentCar, showToast, openConfir
 
       {/* Car Cards Grid */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: '#64748b' }}>Loading fleet vehicles...</div>
+        <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748b' }}>Loading fleet vehicles...</div>
       ) : filteredCars.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', color: '#94a3b8' }}>
-          <CarIcon size={48} style={{ margin: '0 auto 12px', opacity: 0.5 }} />
-          <p style={{ fontSize: '1rem', fontWeight: 500 }}>No vehicles found matching criteria.</p>
+        <div style={{ textAlign: 'center', padding: '40px 20px', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', color: '#94a3b8' }}>
+          <CarIcon size={40} style={{ margin: '0 auto 10px', opacity: 0.5 }} />
+          <p style={{ fontSize: '0.95rem', fontWeight: 600 }}>No vehicles found matching criteria.</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+        <div className="cars-cards-grid">
           {filteredCars.map((car) => (
-            <div
-              key={car.id}
-              style={{
-                background: '#fff',
-                borderRadius: '12px',
-                border: '1px solid #e2e8f0',
-                overflow: 'hidden',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
+            <div key={car.id} className="car-inventory-card">
               {/* Car Image Preview */}
-              <div
-                style={{
-                  height: '180px',
-                  background: '#f1f5f9',
-                  position: 'relative',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  overflow: 'hidden',
-                }}
-              >
+              <div className="car-card-image-box">
                 <img
                   src={getCarImageUrl(car)}
                   alt={car.name}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  className="car-card-img"
                   onError={(e: any) => {
                     e.currentTarget.src = '/images/cars/default-car.jpg';
                   }}
                 />
                 <span
-                  className={`badge ${car.status === 'Available' ? 'badge-success' : 'badge-warning'}`}
-                  style={{
-                    position: 'absolute',
-                    top: '12px',
-                    right: '12px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
-                    fontWeight: 700,
-                  }}
+                  className={`badge ${car.status === 'Available' ? 'badge-success' : 'badge-warning'} car-card-badge`}
                 >
                   {car.status}
                 </span>
               </div>
 
               {/* Car Details */}
-              <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                  <div>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>{car.name}</h3>
-                    <span style={{ fontSize: '0.85rem', color: '#64748b' }}>{car.model || 'Standard'}</span>
+              <div className="car-card-body">
+                <div className="car-card-header">
+                  <div style={{ overflow: 'hidden' }}>
+                    <h3 className="car-card-title" title={car.name}>{car.name}</h3>
+                    <span className="car-card-model">{car.model || 'Standard'}</span>
                   </div>
-                  <span style={{ background: '#f1f5f9', color: '#475569', fontSize: '0.8rem', fontWeight: 600, padding: '3px 8px', borderRadius: '4px' }}>
-                    {car.plate}
-                  </span>
+                  <span className="car-card-plate">{car.plate}</span>
                 </div>
 
-                <div style={{ margin: '14px 0', fontSize: '1.25rem', fontWeight: 800, color: '#2563eb' }}>
+                <div className="car-card-price">
                   ${parseFloat(String(car.price_per_day || 0)).toFixed(2)}
-                  <span style={{ fontSize: '0.8rem', fontWeight: 400, color: '#64748b' }}> / day</span>
+                  <span className="car-card-period"> / day</span>
                 </div>
 
-                <div style={{ marginTop: 'auto', paddingTop: '14px', borderTop: '1px solid #f1f5f9', display: 'flex', gap: '8px' }}>
+                <div className="car-card-actions">
                   {car.status === 'Available' && (
                     <button
-                      className="btn btn-primary btn-sm"
-                      style={{ flex: 1 }}
+                      className="btn btn-primary btn-sm car-rent-btn"
                       onClick={() => onRentCar(car)}
                       type="button"
                     >
-                      <FileText size={14} style={{ marginRight: '4px' }} />
-                      Rent Now
+                      <FileText size={13} />
+                      <span>Rent Now</span>
                     </button>
                   )}
 
                   {isManager && (
-                    <>
+                    <div className="car-action-group">
                       <button
-                        className="btn btn-secondary btn-sm"
+                        className="btn btn-secondary btn-sm car-icon-btn"
                         onClick={() => handleOpenEdit(car)}
                         title="Edit Vehicle"
                         type="button"
                       >
-                        <Edit2 size={14} />
+                        <Edit2 size={13} />
                       </button>
                       <button
-                        className="btn btn-danger btn-sm"
+                        className="btn btn-danger btn-sm car-icon-btn"
                         onClick={() => handleDeleteCar(car)}
                         title="Delete Vehicle"
                         type="button"
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={13} />
                       </button>
-                    </>
+                    </div>
                   )}
                 </div>
               </div>

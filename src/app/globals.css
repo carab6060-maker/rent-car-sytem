@@ -3257,5 +3257,165 @@ button.nav-item,
   margin-top: 4px !important;
 }
 
+/* ========================================================
+   COMPACT 3-COLUMN CARS GRID & ZERO CUT-OFF VIEWPORT
+   ======================================================== */
+.cars-cards-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+}
+
+@media (max-width: 960px) {
+  .cars-cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)) !important;
+  }
+}
+
+.car-inventory-card {
+  background: #ffffff !important;
+  border-radius: 12px !important;
+  border: 1px solid #e2e8f0 !important;
+  overflow: hidden !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.car-inventory-card:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 10px 22px -3px rgba(15, 23, 42, 0.09) !important;
+  border-color: #cbd5e1 !important;
+}
+
+.car-card-image-box {
+  height: 140px !important;
+  background: #f1f5f9 !important;
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+}
+
+.car-card-img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  transition: transform 0.3s ease !important;
+}
+
+.car-inventory-card:hover .car-card-img {
+  transform: scale(1.05) !important;
+}
+
+.car-card-badge {
+  position: absolute !important;
+  top: 10px !important;
+  right: 10px !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.16) !important;
+  font-weight: 700 !important;
+  font-size: 0.72rem !important;
+  padding: 3px 8px !important;
+  border-radius: 9999px !important;
+}
+
+.car-card-body {
+  padding: 12px 14px 14px !important;
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.car-card-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  margin-bottom: 4px !important;
+  gap: 8px !important;
+}
+
+.car-card-title {
+  font-size: 0.98rem !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 150px !important;
+  letter-spacing: -0.01em !important;
+}
+
+.car-card-model {
+  font-size: 0.76rem !important;
+  color: #64748b !important;
+  display: block !important;
+}
+
+.car-card-plate {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  padding: 2px 7px !important;
+  border-radius: 4px !important;
+  font-family: monospace !important;
+  border: 1px solid #e2e8f0 !important;
+  white-space: nowrap !important;
+}
+
+.car-card-price {
+  margin: 6px 0 10px !important;
+  font-size: 1.15rem !important;
+  font-weight: 800 !important;
+  color: #2563eb !important;
+  letter-spacing: -0.02em !important;
+}
+
+.car-card-period {
+  font-size: 0.75rem !important;
+  font-weight: 400 !important;
+  color: #64748b !important;
+}
+
+.car-card-actions {
+  margin-top: auto !important;
+  padding-top: 10px !important;
+  border-top: 1px solid #f1f5f9 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.car-rent-btn {
+  flex: 1 !important;
+  height: 32px !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  gap: 6px !important;
+  padding: 0 10px !important;
+  border-radius: 7px !important;
+}
+
+.car-action-group {
+  display: flex !important;
+  gap: 6px !important;
+  margin-left: auto !important;
+}
+
+.car-icon-btn {
+  width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  border-radius: 7px !important;
+}
+
+
 
 
