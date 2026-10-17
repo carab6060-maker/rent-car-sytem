@@ -56,25 +56,30 @@ export default function LoginPage() {
 
   return (
     <div
+      className="login-page-container"
       style={{
         minHeight: '100vh',
+        width: '100%',
+        flex: '1 1 100%',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#f4f7fb',
+        background: 'linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%)',
         padding: '30px 16px',
         fontFamily: 'Inter, sans-serif',
       }}
     >
       <div
+        className="login-card"
         style={{
           background: '#ffffff',
-          borderRadius: '14px',
-          boxShadow: '0 10px 30px rgba(32, 34, 93, 0.08)',
-          border: '1px solid #eef2f6',
+          borderRadius: '16px',
+          boxShadow: '0 20px 40px -15px rgba(15, 23, 42, 0.12), 0 0 1px 1px rgba(0,0,0,0.05)',
+          border: '1px solid #e2e8f0',
           width: '100%',
           maxWidth: '440px',
           padding: '40px 32px',
+          margin: 'auto',
         }}
       >
         {/* Brand */}
@@ -211,15 +216,16 @@ export default function LoginPage() {
             style={{
               width: '100%',
               padding: '12px',
-              backgroundColor: '#20225d',
+              background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
               color: '#ffffff',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '10px',
               fontSize: '0.96rem',
-              fontWeight: 600,
+              fontWeight: 700,
               cursor: loading ? 'not-allowed' : 'pointer',
               opacity: loading ? 0.7 : 1,
-              transition: 'background-color 0.2s ease',
+              boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)',
+              transition: 'all 0.2s ease',
             }}
           >
             {loading ? 'Signing in…' : 'Sign In'}

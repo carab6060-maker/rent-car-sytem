@@ -3416,6 +3416,35 @@ button.nav-item,
   border-radius: 7px !important;
 }
 
+/* ========================================================
+   FULL-WIDTH LOGIN PAGE CENTERING
+   ======================================================== */
+body:has(.login-page-container) {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100vw !important;
+  min-height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%) !important;
+}
+
+.login-page-container {
+  width: 100vw !important;
+  min-height: 100vh !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 1 1 100% !important;
+  margin: 0 auto !important;
+}
+
+.login-card {
+  margin: auto !important;
+}
+
+
 
 
 
