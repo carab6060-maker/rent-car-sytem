@@ -213,14 +213,14 @@ export default function RentalsView({
       {/* Filter / Search */}
       <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '20px' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: '240px' }}>
-          <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+          <Search size={17} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none' }} />
           <input
             type="text"
             className="form-control"
             placeholder="Search by customer, car, or plate..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ paddingLeft: '38px' }}
+            style={{ paddingLeft: '42px', height: '42px', borderRadius: '10px' }}
           />
         </div>
 

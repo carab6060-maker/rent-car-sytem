@@ -138,15 +138,15 @@ export default function PaymentsView({ currentUser, onOpenPrint, showToast }: Pa
         </button>
       </div>
 
-      <div style={{ position: 'relative', maxWidth: '400px', marginBottom: '20px' }}>
-        <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+      <div style={{ position: 'relative', maxWidth: '420px', marginBottom: '20px' }}>
+        <Search size={17} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none' }} />
         <input
           type="text"
           className="form-control"
           placeholder="Search by customer, car, or reference..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{ paddingLeft: '38px' }}
+          style={{ paddingLeft: '42px', height: '42px', borderRadius: '10px' }}
         />
       </div>
 
