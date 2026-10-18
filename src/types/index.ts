@@ -110,3 +110,29 @@ export interface DashboardData {
   netProfit?: number;
   recentRentals: Rental[];
 }
+
+export interface LedgerTransaction {
+  id: string | number;
+  type: 'income' | 'expense';
+  date: string;
+  title: string;
+  category: string;
+  payment_method: string;
+  amount: number;
+  reference_no?: string | null;
+  recorded_by?: string | null;
+  customer_name?: string | null;
+  car_name?: string | null;
+}
+
+export interface AccountingSummary {
+  totalRevenue: number;
+  totalExpenses: number;
+  netProfit: number;
+  profitMargin: number;
+  accountsReceivable: number;
+  revenueByMethod: Record<string, number>;
+  expensesByCategory: Record<string, number>;
+  transactions: LedgerTransaction[];
+}
+

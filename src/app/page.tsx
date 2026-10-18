@@ -14,6 +14,7 @@ import CustomersView from '@/components/views/CustomersView';
 import RentalsView from '@/components/views/RentalsView';
 import PaymentsView from '@/components/views/PaymentsView';
 import ExpensesView from '@/components/views/ExpensesView';
+import AccountingView from '@/components/views/AccountingView';
 import UsersView from '@/components/views/UsersView';
 import CompaniesView from '@/components/views/CompaniesView';
 
@@ -245,6 +246,14 @@ export default function AppMainPage() {
           {currentPage === 'expenses' && (
             <ExpensesView
               currentUser={currentUser}
+              showToast={showToast}
+            />
+          )}
+
+          {currentPage === 'accounting' && (
+            <AccountingView
+              currentUser={currentUser}
+              companyName={currentUser?.companyName}
               showToast={showToast}
             />
           )}

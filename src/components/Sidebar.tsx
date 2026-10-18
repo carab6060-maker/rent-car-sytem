@@ -11,6 +11,7 @@ import {
   UserCheck,
   Building2,
   LogOut,
+  Wallet,
 } from 'lucide-react';
 import { User } from '@/types';
 
@@ -43,6 +44,7 @@ export default function Sidebar({
     { id: 'rentals', label: 'Rentals', icon: FileText },
     { id: 'payments', label: 'Payments', icon: CreditCard },
     { id: 'expenses', label: 'Expenses', icon: Receipt },
+    { id: 'accounting', label: 'Accounting', icon: Wallet },
   ];
 
   if (isManager) {
