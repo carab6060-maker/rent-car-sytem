@@ -18,6 +18,7 @@ const PAGE_TITLES: Record<string, string> = {
   rentals: 'Rental Contracts & Bookings',
   payments: 'Payment Transactions & Invoices',
   expenses: 'Operating Expenses & Fleet Costs',
+  accounting: 'Accounting & Financial Statements',
   users: 'User Management',
   companies: 'Multi-Tenant Companies (SaaS Admin)',
 };
