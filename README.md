@@ -7,7 +7,7 @@ A simple, fast, and professional Multi-Tenant Car Rental Management System built
 - **Dashboard**: Live metrics for Total Cars, Available Cars, Rented Cars, and Total Customers.
 - **Cars**: Add, edit, delete, and view cars with pricing and availability status.
 - **Customers**: Add, edit, delete, and view customer records with driving license info.
-- **Rentals**:
+- **Rentals**: 
   - Automatic rental duration and total price calculation (`Days × Price/Day`).
   - Automatic status updates (`Available` ↔ `Rented`).
   - Overlapping rental prevention for active bookings.

@@ -162,8 +162,16 @@ export default function RentalsView({
         body: JSON.stringify(returnForm),
       });
 
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.error || 'Failed to process vehicle return');
+      let result: any = {};
+      try {
+        result = await res.json();
+      } catch {
+        result = {};
+      }
+
+      if (!res.ok) {
+        throw new Error(result.error || `Failed to process return (Status ${res.status})`);
+      }
 
       showToast('Vehicle returned and contract closed successfully');
       setIsReturnModalOpen(false);
